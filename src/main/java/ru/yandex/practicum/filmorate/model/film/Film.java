@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @Builder
 public class Film {
     private Long id;
-    public static final int DESCRIPTION_MAX_SIZE = 200;
+    private static final int DESCRIPTION_MAX_SIZE = 200;
 
     @NotBlank
     private String name;
