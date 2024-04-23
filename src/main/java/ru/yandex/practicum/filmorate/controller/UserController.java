@@ -2,10 +2,10 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.user.InMemUsersRepository;
-import ru.yandex.practicum.filmorate.model.user.User;
-import ru.yandex.practicum.filmorate.model.user.UsersRepository;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
 
@@ -13,20 +13,25 @@ import java.util.Collection;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private final UsersRepository usersRepository = new InMemUsersRepository();
+    private final UserService service;
+
+    @Autowired
+    public UserController(UserService service) {
+        this.service = service;
+    }
 
     @GetMapping
     public Collection<User> findAll() {
-        return usersRepository.findAll();
+        return service.findAll();
     }
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        return usersRepository.create(user);
+        return service.create(user);
     }
 
     @PutMapping
     public User update(@Valid @RequestBody User newUser) {
-        return usersRepository.update(newUser);
+        return service.update(newUser);
     }
 }

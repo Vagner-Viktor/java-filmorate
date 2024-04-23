@@ -7,8 +7,12 @@ import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.film.Film;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -18,9 +22,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 class FilmControllerTest {
 
-    FilmController controller = new FilmController();
+
+    FilmStorage storage = new InMemoryFilmStorage();
+    FilmService service = new FilmService(storage);
+    FilmController controller = new FilmController(service);
+
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @AllArgsConstructor
