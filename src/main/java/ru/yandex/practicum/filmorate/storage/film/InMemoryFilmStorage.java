@@ -1,20 +1,32 @@
 package ru.yandex.practicum.filmorate.storage.film;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
 
     private final Map<Long, Film> films = new HashMap<>();
+
+    @Autowired
+    private final UserStorage userStorage;
+
+    public InMemoryFilmStorage(UserStorage userStorage) {
+        this.userStorage = userStorage;
+    }
 
     @Override
     public Collection<Film> findAll() {
@@ -41,6 +53,38 @@ public class InMemoryFilmStorage implements FilmStorage {
             return newFilm;
         }
         throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
+    }
+
+    @Override
+    public Film addLike(Long id, Long userId) {
+        if (!films.containsKey(id))
+            throw new NotFoundException("Фильм с id = " + id + " не найден");
+        if (!userStorage.getUsers().containsKey(userId))
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        films.get(id).addLike(userId);
+        log.info("Пользователь с id = {} поставил лайк фильму id = {}", userId, id);
+        return films.get(id);
+    }
+
+    @Override
+    public Film deleteLike(Long id, Long userId) {
+        if (!films.containsKey(id))
+            throw new NotFoundException("Фильм с id = " + id + " не найден");
+        if (!userStorage.getUsers().containsKey(userId))
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        films.get(id).deleteLike(userId);
+        log.info("Пользователь с id = {} удалил лайк фильму id = {}", userId, id);
+        return films.get(id);
+    }
+
+    @Override
+    public Collection<Film> getPopular(Long count) {
+        if (count < 0) throw new ValidationException("Параметр count не может быть меньше 0");
+        log.info("Получение списка {} популярных фильмов", count);
+        return films.values().stream()
+                .sorted(Comparator.comparingInt(Film::getLikesCount).reversed())
+                .limit(count)
+                .collect(Collectors.toList());
     }
 
     private Long getNextId() {

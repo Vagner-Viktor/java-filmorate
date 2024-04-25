@@ -4,15 +4,19 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.film.InMemoryFilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -25,10 +29,10 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 class FilmControllerTest {
 
-
-    FilmStorage storage = new InMemoryFilmStorage();
-    FilmService service = new FilmService(storage);
-    FilmController controller = new FilmController(service);
+    private final UserStorage userStorage = new InMemoryUserStorage();
+    private final FilmStorage storage = new InMemoryFilmStorage(userStorage);
+    private final FilmService service = new FilmService(storage);
+    private final FilmController controller = new FilmController(service);
 
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
@@ -36,6 +40,11 @@ class FilmControllerTest {
     static class ExpectedViolation {
         String propertyPath;
         String message;
+    }
+
+    @BeforeEach
+    void setUp() {
+
     }
 
 
@@ -221,5 +230,195 @@ class FilmControllerTest {
         );
     }
 
+    @Test
+    void addLike() {
+        Film film = Film.builder()
+                .id(null)
+                .name("Фильм №1")
+                .description("Описание фильма №1")
+                .releaseDate(LocalDate.now())
+                .duration(Duration.ofMinutes(90))
+                .build();
+        Long filmId = controller.create(film).getId();
 
+        User user = User.builder()
+                .id(null)
+                .name("User 1")
+                .email("user@ya.ru")
+                .login("userLogin1")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user1Id = userStorage.create(user).getId();
+
+        controller.addLike(filmId, user1Id);
+
+        ArrayList<Film> responseEntity = new ArrayList<>(controller.findAll());
+        assertNotNull(responseEntity);
+        assertEquals(1, responseEntity.size());
+        assertEquals(1, responseEntity.get(0).getLikesCount());
+        assertTrue(responseEntity.get(0).getLikes().contains(user1Id));
+    }
+
+    @Test
+    void deleteLike() {
+        Film film = Film.builder()
+                .id(null)
+                .name("Фильм №1")
+                .description("Описание фильма №1")
+                .releaseDate(LocalDate.now())
+                .duration(Duration.ofMinutes(90))
+                .build();
+        Long filmId = controller.create(film).getId();
+
+        User user = User.builder()
+                .id(null)
+                .name("User 1")
+                .email("user@ya.ru")
+                .login("userLogin1")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user1Id = userStorage.create(user).getId();
+
+        controller.addLike(filmId, user1Id);
+        controller.deleteLike(filmId, user1Id);
+
+        ArrayList<Film> responseEntity = new ArrayList<>(controller.findAll());
+        assertNotNull(responseEntity);
+        assertEquals(1, responseEntity.size());
+        assertEquals(0, responseEntity.get(0).getLikesCount());
+    }
+
+    @Test
+    void getPopularCount10() {
+        Film film1 = Film.builder()
+                .id(null)
+                .name("Фильм №1")
+                .description("Описание фильма №1")
+                .releaseDate(LocalDate.now())
+                .duration(Duration.ofMinutes(90))
+                .build();
+        Long film1Id = controller.create(film1).getId();
+        Film film2 = Film.builder()
+                .id(null)
+                .name("Фильм №2")
+                .description("Описание фильма №2")
+                .releaseDate(LocalDate.now())
+                .duration(Duration.ofMinutes(90))
+                .build();
+        Long film2Id = controller.create(film2).getId();
+        Film film3 = Film.builder()
+                .id(null)
+                .name("Фильм №3")
+                .description("Описание фильма №3")
+                .releaseDate(LocalDate.now())
+                .duration(Duration.ofMinutes(90))
+                .build();
+        Long film3Id = controller.create(film3).getId();
+
+        User user1 = User.builder()
+                .id(null)
+                .name("User 1")
+                .email("user@ya.ru")
+                .login("userLogin1")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user1Id = userStorage.create(user1).getId();
+        User user2 = User.builder()
+                .id(null)
+                .name("User 2")
+                .email("user2@ya.ru")
+                .login("userLogin2")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user2Id = userStorage.create(user2).getId();
+        User user3 = User.builder()
+                .id(null)
+                .name("User 3")
+                .email("user3@ya.ru")
+                .login("userLogin3")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user3Id = userStorage.create(user3).getId();
+
+        controller.addLike(film2Id, user1Id);
+        controller.addLike(film2Id, user2Id);
+        controller.addLike(film2Id, user3Id);
+
+        controller.addLike(film3Id, user1Id);
+        controller.addLike(film3Id, user2Id);
+
+
+        ArrayList<Film> responseEntity = new ArrayList<>(controller.getPopular(10L));
+        assertNotNull(responseEntity);
+        assertEquals(3, responseEntity.size());
+        assertEquals(film2Id, responseEntity.get(0).getId());
+        assertEquals(film3Id, responseEntity.get(1).getId());
+        assertEquals(film1Id, responseEntity.get(2).getId());
+    }
+
+    @Test
+    void getPopularCount1() {
+        Film film1 = Film.builder()
+                .id(null)
+                .name("Фильм №1")
+                .description("Описание фильма №1")
+                .releaseDate(LocalDate.now())
+                .duration(Duration.ofMinutes(90))
+                .build();
+        Long film1Id = controller.create(film1).getId();
+        Film film2 = Film.builder()
+                .id(null)
+                .name("Фильм №2")
+                .description("Описание фильма №2")
+                .releaseDate(LocalDate.now())
+                .duration(Duration.ofMinutes(90))
+                .build();
+        Long film2Id = controller.create(film2).getId();
+        Film film3 = Film.builder()
+                .id(null)
+                .name("Фильм №3")
+                .description("Описание фильма №3")
+                .releaseDate(LocalDate.now())
+                .duration(Duration.ofMinutes(90))
+                .build();
+        Long film3Id = controller.create(film3).getId();
+
+        User user1 = User.builder()
+                .id(null)
+                .name("User 1")
+                .email("user@ya.ru")
+                .login("userLogin1")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user1Id = userStorage.create(user1).getId();
+        User user2 = User.builder()
+                .id(null)
+                .name("User 2")
+                .email("user2@ya.ru")
+                .login("userLogin2")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user2Id = userStorage.create(user2).getId();
+        User user3 = User.builder()
+                .id(null)
+                .name("User 3")
+                .email("user3@ya.ru")
+                .login("userLogin3")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user3Id = userStorage.create(user3).getId();
+
+        controller.addLike(film2Id, user1Id);
+        controller.addLike(film2Id, user2Id);
+        controller.addLike(film2Id, user3Id);
+
+        controller.addLike(film3Id, user1Id);
+        controller.addLike(film3Id, user2Id);
+
+
+        ArrayList<Film> responseEntity = new ArrayList<>(controller.getPopular(1L));
+        assertNotNull(responseEntity);
+        assertEquals(1, responseEntity.size());
+        assertEquals(film2Id, responseEntity.get(0).getId());
+    }
 }

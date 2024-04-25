@@ -2,16 +2,15 @@ package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
-import java.util.Objects;
 
 @Service
 public class UserService {
+
+    @Autowired
     private final UserStorage storage;
 
     @Autowired
@@ -24,28 +23,26 @@ public class UserService {
     }
 
     public User create(User user) {
-        validate(user);
         return storage.create(user);
     }
 
     public User update(User newUser) {
-        validate(newUser);
         return storage.update(newUser);
     }
 
-    private void validate(User user) {
-        if (checkDuplicatedEmail(user.getEmail())) {
-            throw new DuplicatedDataException("Этот e-mail уже используется");
-        }
-        if (user.getLogin().indexOf(" ") != -1) {
-            throw new ValidationException("Логин не может содержать пробелов");
-        }
-        if (user.getName() == null || user.getName().isBlank()) user.setName(user.getLogin());
+    public User addToFriends(Long id, Long friendId) {
+        return storage.addToFriends(id, friendId);
     }
 
-    private boolean checkDuplicatedEmail(String email) {
-        return storage.findAll()
-                .stream()
-                .anyMatch(user1 -> Objects.equals(email, user1.getEmail()));
+    public User deleteFromFriends(Long id, Long friendId) {
+        return storage.deleteFromFriends(id, friendId);
+    }
+
+    public Collection<User> findAllFriends(Long id) {
+        return storage.findAllFriends(id);
+    }
+
+    public Collection<User> findCommonFriends(Long id, Long otherId) {
+        return storage.findCommonFriends(id, otherId);
     }
 }
