@@ -8,8 +8,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.user.User;
+import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -18,9 +22,13 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 class UserControllerTest {
 
-    UserController controller = new UserController();
+    UserStorage storage = new InMemoryUserStorage();
+    UserService service = new UserService(storage);
+    UserController controller = new UserController(service);
+
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @AllArgsConstructor
@@ -328,4 +336,125 @@ class UserControllerTest {
         assertEquals(user.getBirthday(), responseEntity.iterator().next().getBirthday());
     }
 
+    @Test
+    void addFriend() {
+        User user = User.builder()
+                .id(null)
+                .name("User 1")
+                .email("user@ya.ru")
+                .login("userLogin1")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user1Id = controller.create(user).getId();
+        User user2 = User.builder()
+                .id(null)
+                .name("User 2")
+                .email("user2@ya.ru")
+                .login("userLogin2")
+                .birthday(LocalDate.of(2002, 2, 20))
+                .build();
+        Long user2Id = controller.create(user2).getId();
+        controller.addToFriends(user1Id, user2Id);
+        List<User> responseEntity = new ArrayList<>(controller.findAll());
+        assertNotNull(responseEntity);
+        assertEquals(2, responseEntity.size());
+        assertTrue(responseEntity.get(0).getFriends().contains(user2Id));
+        assertTrue(responseEntity.get(1).getFriends().contains(user1Id));
+    }
+
+    @Test
+    void deleteFriend() {
+        User user = User.builder()
+                .id(null)
+                .name("User 1")
+                .email("user@ya.ru")
+                .login("userLogin1")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user1Id = controller.create(user).getId();
+        User user2 = User.builder()
+                .id(null)
+                .name("User 2")
+                .email("user2@ya.ru")
+                .login("userLogin2")
+                .birthday(LocalDate.of(2002, 2, 20))
+                .build();
+        Long user2Id = controller.create(user2).getId();
+        controller.addToFriends(user1Id, user2Id);
+        controller.deleteFromFriends(user1Id, user2Id);
+        List<User> responseEntity = new ArrayList<>(controller.findAll());
+        assertNotNull(responseEntity);
+        assertEquals(2, responseEntity.size());
+        assertFalse(responseEntity.get(0).getFriends().contains(user2Id));
+        assertFalse(responseEntity.get(1).getFriends().contains(user1Id));
+    }
+
+    @Test
+    void findAllFriends() {
+        User user = User.builder()
+                .id(null)
+                .name("User 1")
+                .email("user@ya.ru")
+                .login("userLogin1")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user1Id = controller.create(user).getId();
+        User user2 = User.builder()
+                .id(null)
+                .name("User 2")
+                .email("user2@ya.ru")
+                .login("userLogin2")
+                .birthday(LocalDate.of(2002, 2, 20))
+                .build();
+        Long user2Id = controller.create(user2).getId();
+        User user3 = User.builder()
+                .id(null)
+                .name("User 3")
+                .email("user3@ya.ru")
+                .login("userLogin3")
+                .birthday(LocalDate.of(2002, 2, 20))
+                .build();
+        Long user3Id = controller.create(user3).getId();
+        controller.addToFriends(user1Id, user2Id);
+        controller.addToFriends(user1Id, user3Id);
+        List<User> responseEntity = new ArrayList<>(controller.findAllFriends(user1Id));
+        assertNotNull(responseEntity);
+        assertEquals(2, responseEntity.size());
+        assertEquals(responseEntity.get(0).getId(), user2Id);
+        assertEquals(responseEntity.get(1).getId(), user3Id);
+    }
+
+    @Test
+    void findCommonFriends() {
+        User user = User.builder()
+                .id(null)
+                .name("User 1")
+                .email("user@ya.ru")
+                .login("userLogin1")
+                .birthday(LocalDate.of(2000, 2, 20))
+                .build();
+        Long user1Id = controller.create(user).getId();
+        User user2 = User.builder()
+                .id(null)
+                .name("User 2")
+                .email("user2@ya.ru")
+                .login("userLogin2")
+                .birthday(LocalDate.of(2002, 2, 20))
+                .build();
+        Long user2Id = controller.create(user2).getId();
+        User user3 = User.builder()
+                .id(null)
+                .name("User 3")
+                .email("user3@ya.ru")
+                .login("userLogin3")
+                .birthday(LocalDate.of(2002, 2, 20))
+                .build();
+        Long user3Id = controller.create(user3).getId();
+        controller.addToFriends(user1Id, user2Id);
+        controller.addToFriends(user1Id, user3Id);
+        List<User> responseEntity = new ArrayList<>(controller.findCommonFriends(user2Id, user3Id));
+        assertNotNull(responseEntity);
+        assertEquals(1, responseEntity.size());
+        assertEquals(responseEntity.get(0).getId(), user1Id);
+    }
 }
