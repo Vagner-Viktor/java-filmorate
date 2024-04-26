@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -10,13 +10,9 @@ import java.time.LocalDate;
 import java.util.Collection;
 
 @Service
+@RequiredArgsConstructor
 public class FilmService {
     private final FilmStorage storage;
-
-    @Autowired
-    public FilmService(FilmStorage storage) {
-        this.storage = storage;
-    }
 
     public Collection<Film> findAll() {
         return storage.findAll();

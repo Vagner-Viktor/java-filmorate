@@ -22,8 +22,8 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public Map<Long, User> getUsers() {
-        return users;
+    public boolean checkUserExists(Long id) {
+        return users.containsKey(id);
     }
 
     @Override
