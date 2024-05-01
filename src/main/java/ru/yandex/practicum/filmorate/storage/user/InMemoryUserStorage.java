@@ -81,7 +81,7 @@ public class InMemoryUserStorage implements UserStorage {
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
         log.info("Поиск друзей пользователя с id = {}", id);
         return users.values().stream()
-                .filter(user -> users.get(id).getFriends().contains(user.getId()))
+                .filter(user -> users.get(id).getFriends().containsKey(user.getId()))
                 .collect(Collectors.toList());
     }
 
@@ -92,8 +92,8 @@ public class InMemoryUserStorage implements UserStorage {
         if (!users.containsKey(otherId))
             throw new NotFoundException("Пользователь с id = " + otherId + " не найден");
         log.info("Поиск общих друзей пользователя с id = {} и пользователя с id = {}", id, otherId);
-        Set<Long> commonFriendId = users.get(id).getFriends().stream()
-                .filter(friendId -> users.get(otherId).getFriends().contains(friendId))
+        Set<Long> commonFriendId = users.get(id).getFriends().keySet().stream()
+                .filter(friendId -> users.get(otherId).getFriends().containsKey(friendId))
                 .collect(Collectors.toSet());
         return users.values().stream()
                 .filter(user -> commonFriendId.contains(user.getId()))

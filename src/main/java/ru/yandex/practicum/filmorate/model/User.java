@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 @Builder
@@ -35,10 +35,10 @@ public class User {
     private LocalDate birthday;
 
     @Builder.Default
-    private Set<Long> friends = new HashSet<>();
+    private Map<Long, FriendshipStatus> friends = new HashMap();
 
     public void addFriend(Long id) {
-        friends.add(id);
+        friends.put(id, FriendshipStatus.UNCONFIRMED);
     }
 
     public void deleteFriend(Long id) {

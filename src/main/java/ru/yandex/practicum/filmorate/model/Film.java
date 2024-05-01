@@ -40,6 +40,11 @@ public class Film {
     @Builder.Default
     private Set<Long> likes = new HashSet<>();
 
+    private RatingMPA rating;
+
+    @Builder.Default
+    private Set<String> genres = new HashSet<>();
+
     @JsonProperty("duration")
     @Positive
     public long getDurationTimeSeconds() {
@@ -58,3 +63,4 @@ public class Film {
         return likes.size();
     }
 }
+
