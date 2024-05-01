@@ -7,7 +7,7 @@
 ### Examples of SQL queries
 
 Films genre:
-```
+```SQL
 SELECT 
 	f.name,
 	g.gerne
@@ -17,7 +17,7 @@ LEFT JOIN gerne AS g ON fg.gerne_id = g.id;
 ```
 
 Top list of best films:
-```
+```SQL
 SELECT 
 	f.name AS name,
 	COUNT(l.film_id) AS count
@@ -28,7 +28,7 @@ ORDER BY count DESC;
 ```
 
 Number of user friends:
-```
+```SQL
 SELECT 
 	u.username AS name,
 	COUNT(f.friend_id) AS count
@@ -39,7 +39,7 @@ ORDER BY count DESC;
 ```
 
 Common friends of users:
-```
+```SQL
 SELECT u.username
 FROM users AS u
 WHERE u.id IN (
