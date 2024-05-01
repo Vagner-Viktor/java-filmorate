@@ -358,8 +358,8 @@ class UserControllerTest {
         List<User> responseEntity = new ArrayList<>(controller.findAll());
         assertNotNull(responseEntity);
         assertEquals(2, responseEntity.size());
-        assertTrue(responseEntity.get(0).getFriends().contains(user2Id));
-        assertTrue(responseEntity.get(1).getFriends().contains(user1Id));
+        assertTrue(responseEntity.get(0).getFriends().containsKey(user2Id));
+        assertTrue(responseEntity.get(1).getFriends().containsKey(user1Id));
     }
 
     @Test
@@ -385,8 +385,8 @@ class UserControllerTest {
         List<User> responseEntity = new ArrayList<>(controller.findAll());
         assertNotNull(responseEntity);
         assertEquals(2, responseEntity.size());
-        assertFalse(responseEntity.get(0).getFriends().contains(user2Id));
-        assertFalse(responseEntity.get(1).getFriends().contains(user1Id));
+        assertFalse(responseEntity.get(0).getFriends().containsKey(user2Id));
+        assertFalse(responseEntity.get(1).getFriends().containsKey(user1Id));
     }
 
     @Test
