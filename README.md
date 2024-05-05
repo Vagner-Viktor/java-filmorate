@@ -4,6 +4,13 @@
 ## Database structure
 ![Database structure](dbdiagram.svg)
 
+The database contains information about films (**table films**) and users (**table users**).
+Each film can have several genres (**table gerne**), rating of the Motion Picture Association (abbreviated as MPA). This rating determines the age limit for the film. The user can like each movie (**likes table**).
+
+A user can send a friend request to another user. Status for a “friendship” (**table friendship_status**) connection between two users:
+* unconfirmed - when one user sent a request to add another user as a friend,
+* confirmed - when the second user agreed to be added.
+
 ### Examples of SQL queries
 
 Films genre:
