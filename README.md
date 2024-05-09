@@ -19,8 +19,8 @@ SELECT
 	f.name,
 	g.gerne
 FROM films AS f
-LEFT JOIN films_gerne AS fg ON fg.film_id = f.id
-LEFT JOIN gerne AS g ON fg.gerne_id = g.id;
+LEFT JOIN films_gerne AS fg ON fg.film_id = f.film_id
+LEFT JOIN gerne AS g ON fg.gerne_id = g.gerne_id;
 ```
 
 Top list of best films:
@@ -29,7 +29,7 @@ SELECT
 	f.name AS name,
 	COUNT(l.film_id) AS count
 FROM films AS f
-LEFT JOIN likes AS l ON l.film_id = f.id
+LEFT JOIN likes AS l ON l.film_id = f.film_id
 GROUP BY name
 ORDER BY count DESC;
 ```
@@ -40,7 +40,7 @@ SELECT
 	u.username AS name,
 	COUNT(f.friend_id) AS count
 FROM users AS u
-LEFT JOIN friends AS f ON f.user_id = u.id
+LEFT JOIN friends AS f ON f.user_id = u.user_id
 GROUP BY name
 ORDER BY count DESC;
 ```
@@ -49,7 +49,7 @@ Common friends of users:
 ```SQL
 SELECT u.username
 FROM users AS u
-WHERE u.id IN (
+WHERE u.user_id IN (
 	SELECT friends_of_first.friend
 	FROM (
 		SELECT friend_id AS friend FROM friends WHERE user_id = 1
