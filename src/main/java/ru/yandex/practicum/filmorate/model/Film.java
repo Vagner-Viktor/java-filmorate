@@ -43,7 +43,7 @@ public class Film {
     private RatingMPA rating;
 
     @Builder.Default
-    private Set<String> genres = new HashSet<>();
+    private Set<Genre> genres = new HashSet<>();
 
     @JsonProperty("duration")
     @Positive
