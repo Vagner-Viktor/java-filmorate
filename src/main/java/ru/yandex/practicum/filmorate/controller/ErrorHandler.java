@@ -44,7 +44,7 @@ public class ErrorHandler {
     public ErrorResponse handleRuntimeException(final RuntimeException e) {
         return new ErrorResponse(
                 "Произошла непредвиденная ошибка.",
-                ""
+                e.getMessage()
         );
     }
 }

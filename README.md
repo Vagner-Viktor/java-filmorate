@@ -58,7 +58,7 @@ WHERE u.user_id IN (
 		) AS friends_of_first
 	JOIN (
 		SELECT friend_id AS friend FROM friends WHERE user_id = 2
-		union 
+		UNION 
 		SELECT user_id AS friend FROM friends WHERE friend_id = 2
 		) AS friends_of_second
 	ON friends_of_first.friend = friends_of_second.friend
