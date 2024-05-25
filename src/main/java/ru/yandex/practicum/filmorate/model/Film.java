@@ -40,10 +40,10 @@ public class Film {
     @Builder.Default
     private Set<Long> likes = new HashSet<>();
 
-    private String rating;
+    private Mpa mpa;
 
     @Builder.Default
-    private Set<String> genres = new HashSet<>();
+    private Set<Genre> genres = new HashSet<>();
 
     @JsonProperty("duration")
     @Positive

@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage.user;
+package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
@@ -9,14 +9,13 @@ import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.BaseDbStorage;
 
 import java.util.Collection;
 
 @Slf4j
 @Component
 @Primary
-public class DbUserStorage extends BaseDbStorage<User> implements UserStorage {
+public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     private static final int USERS_FRIENDSHIP_STATUS_CONFIRMED = 1;
     private static final int USERS_FRIENDSHIP_STATUS_UNCONFIRMED = 2;
     private static final String USERS_FIND_ALL_QUERY = """
@@ -82,7 +81,7 @@ public class DbUserStorage extends BaseDbStorage<User> implements UserStorage {
             WHERE "email" = ?;
             """;
 
-    public DbUserStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
+    public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
     }
 

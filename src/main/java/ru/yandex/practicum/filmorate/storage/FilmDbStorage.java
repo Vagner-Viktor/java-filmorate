@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.storage.film;
+package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
@@ -9,20 +9,18 @@ import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.BaseDbStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.Collection;
 
 @Slf4j
 @Component
 @Primary
-public class DbFilmStorage extends BaseDbStorage<Film> implements FilmStorage {
+public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private final UserStorage userStorage;
     private static final String FILMS_FIND_ALL_QUERY = """
             SELECT * 
             FROM "films" AS f
-            LEFT JOIN "rating" AS r ON  f."rating_id" = r."rating_id";
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id";
             """;
     private static final String FILMS_INSERT_QUERY = """
             INSERT INTO "films" ("name" , "description" , "release_date" , "duration")
@@ -39,7 +37,7 @@ public class DbFilmStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String FILMS_FIND_BY_ID_QUERY = """
             SELECT * 
             FROM "films" AS f
-            LEFT JOIN "rating" AS r ON  f."rating_id" = r."rating_id"            
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"            
             WHERE "film_id" = ?;
             """;
     private static final String FILMS_ADD_LIKE_QUERY = """
@@ -58,17 +56,17 @@ public class DbFilmStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."description" AS "description",
                 f."release_date" AS "release_date",
                 f."duration" AS "duration",
-                r."rating" AS "rating",
+                r."mpa" AS "mpa",
             COUNT(l."film_id") AS count
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
-            LEFT JOIN "rating" AS r ON  f."rating_id" = r."rating_id"
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
             GROUP BY name
             ORDER BY count DESC
             LIMIT ?;
             """;
 
-    public DbFilmStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
     }
