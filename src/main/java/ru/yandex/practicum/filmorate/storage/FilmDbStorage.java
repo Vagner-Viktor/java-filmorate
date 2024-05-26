@@ -23,7 +23,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private final GenreStorage genreStorage;
     private final MpaStorage mpaStorage;
     private static final String FILMS_FIND_ALL_QUERY = """
-            SELECT * 
+            SELECT *
             FROM "films" AS f
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id";
             """;
@@ -32,18 +32,18 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                         VALUES (?, ?, ?, ?, ?);
             """;
     private static final String FILMS_UPDATE_QUERY = """
-            UPDATE "films" 
-            SET "name" = ?, 
-                "description" = ?, 
-                "release_date" = ?, 
+            UPDATE "films"
+            SET "name" = ?,
+                "description" = ?,
+                "release_date" = ?,
                 "duration" = ?,
                 "mpa_id" = ?
             WHERE "film_id" = ?;
             """;
     private static final String FILMS_FIND_BY_ID_QUERY = """
-            SELECT * 
+            SELECT *
             FROM "films" AS f
-            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"            
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
             WHERE "film_id" = ?;
             """;
     private static final String FILMS_ADD_LIKE_QUERY = """
@@ -51,8 +51,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                         VALUES (?, ?);
             """;
     private static final String FILMS_DELETE_LIKE_QUERY = """
-            DELETE FROM "likes" 
-            WHERE "film_id" = ? 
+            DELETE FROM "likes"
+            WHERE "film_id" = ?
                 AND "user_id" = ?;
             """;
     private static final String FILMS_GET_POPULAR_QUERY = """
@@ -73,7 +73,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             LIMIT ?;
             """;
     private static final String FILMS_DELETE_FILMS_GENRE_QUERY = """
-            DELETE FROM "films_genre" 
+            DELETE FROM "films_genre"
             WHERE "film_id" = ?;
             """;
     private static final String FILMS_INSERT_FILMS_GENRE_QUERY = """

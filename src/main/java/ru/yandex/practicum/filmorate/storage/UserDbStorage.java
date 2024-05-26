@@ -20,7 +20,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     private static final int USERS_FRIENDSHIP_STATUS_CONFIRMED = 1;
     private static final int USERS_FRIENDSHIP_STATUS_UNCONFIRMED = 2;
     private static final String USERS_FIND_ALL_QUERY = """
-            SELECT * 
+            SELECT *
             FROM "users";
             """;
     private static final String USERS_INSERT_QUERY = """
@@ -28,24 +28,24 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                         VALUES (?, ?, ?, ?);
             """;
     private static final String USERS_UPDATE_QUERY = """
-            UPDATE "users" 
-            SET "email" = ?, 
-                "login" = ?, 
-                "username" = ?, 
-                "birthday" = ? 
+            UPDATE "users"
+            SET "email" = ?,
+                "login" = ?,
+                "username" = ?,
+                "birthday" = ?
             WHERE "user_id" = ?;
             """;
     private static final String USERS_ADD_TO_FRIENDS_QUERY = """
             INSERT INTO "friends" ("user_id", "friend_id", "friendship_status_id")
-            VALUES (?, ?, ?); 
+            VALUES (?, ?, ?);
             """;
     private static final String USERS_DELETE_FROM_FRIENDS_QUERY = """
-            DELETE FROM "friends" 
-            WHERE "user_id" = ? 
-                AND "friend_id" = ?; 
+            DELETE FROM "friends"
+            WHERE "user_id" = ?
+                AND "friend_id" = ?;
             """;
     private static final String USERS_FIND_ALL_FRIENDS_QUERY = """
-            SELECT * 
+            SELECT *
             FROM "users" AS u
             WHERE "user_id" IN (
                 SELECT "friend_id"
@@ -72,12 +72,12 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             );
             """;
     private static final String USERS_FIND_BY_ID_QUERY = """
-            SELECT * 
+            SELECT *
             FROM "users"
             WHERE "user_id" = ?;
             """;
     private static final String USERS_FIND_BY_EMAIL_QUERY = """
-            SELECT * 
+            SELECT *
             FROM "users"
             WHERE "email" = ?;
             """;
