@@ -9,29 +9,34 @@ import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 @Slf4j
 @Component
 @Primary
 public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private final UserStorage userStorage;
+    private final GenreStorage genreStorage;
+    private final MpaStorage mpaStorage;
     private static final String FILMS_FIND_ALL_QUERY = """
             SELECT * 
             FROM "films" AS f
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id";
             """;
     private static final String FILMS_INSERT_QUERY = """
-            INSERT INTO "films" ("name" , "description" , "release_date" , "duration")
-                        VALUES (?, ?, ?, ?);
+            INSERT INTO "films" ("name" , "description" , "release_date" , "duration", "mpa_id")
+                        VALUES (?, ?, ?, ?, ?);
             """;
     private static final String FILMS_UPDATE_QUERY = """
             UPDATE "films" 
             SET "name" = ?, 
                 "description" = ?, 
                 "release_date" = ?, 
-                "duration" = ? 
+                "duration" = ?,
+                "mpa_id" = ?
             WHERE "film_id" = ?;
             """;
     private static final String FILMS_FIND_BY_ID_QUERY = """
@@ -56,6 +61,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."description" AS "description",
                 f."release_date" AS "release_date",
                 f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
             COUNT(l."film_id") AS count
             FROM "films" AS f
@@ -65,10 +71,20 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             ORDER BY count DESC
             LIMIT ?;
             """;
+    private static final String FILMS_DELETE_FILMS_GENRE_QUERY = """
+            DELETE FROM "films_genre" 
+            WHERE "film_id" = ?;
+            """;
+    private static final String FILMS_INSERT_FILMS_GENRE_QUERY = """
+            INSERT INTO "films_genre" ("film_id", "genre_id")
+                VALUES (?, ?);
+            """;
 
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
+        this.genreStorage = genreStorage;
+        this.mpaStorage = mpaStorage;
     }
 
     @Override
@@ -78,15 +94,33 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
+    public Film findById(Long id) {
+        log.info("Получение фильма с id = {}", id);
+        return findOne(
+                FILMS_FIND_BY_ID_QUERY,
+                id
+        ).orElseThrow(() -> new NotFoundException("Фильм с id = " + id + " не найден!"));
+    }
+
+    @Override
     public Film create(Film film) {
+        validate(film);
         long id = insertGetKey(
                 FILMS_INSERT_QUERY,
                 film.getName(),
                 film.getDescription(),
                 java.sql.Date.valueOf(film.getReleaseDate()),
-                film.getDuration()
+                film.getDuration(),
+                film.getMpa().getId()
         );
         film.setId(id);
+        for (Genre genre : film.getGenres()) {
+            insert(
+                    FILMS_INSERT_FILMS_GENRE_QUERY,
+                    film.getId(),
+                    genre.getId()
+            );
+        }
         log.info("Фильм {} добавлен в список с id = {}", film.getName(), film.getId());
         return film;
     }
@@ -97,14 +131,27 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             throw new ConditionsNotMetException("Id фильма должен быть указан");
         }
         if (checkFilmExists(film.getId())) {
+            validate(film);
             update(
                     FILMS_UPDATE_QUERY,
                     film.getName(),
                     film.getDescription(),
                     java.sql.Date.valueOf(film.getReleaseDate()),
                     film.getDuration(),
+                    film.getMpa().getId(),
                     film.getId()
             );
+            delete(
+                    FILMS_DELETE_FILMS_GENRE_QUERY,
+                    film.getId()
+            );
+            for (Genre genre : film.getGenres()) {
+                insert(
+                        FILMS_INSERT_FILMS_GENRE_QUERY,
+                        film.getId(),
+                        genre.getId()
+                );
+            }
             log.info("Фильм с id = {} обновлен", film.getId());
             return film;
         }
@@ -165,5 +212,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return findOne(
                 FILMS_FIND_BY_ID_QUERY,
                 id).isPresent();
+    }
+
+    private boolean validate(Film film) {
+        genreStorage.checkGenresExists(film.getGenres());
+        film.setGenres(new HashSet<>(film.getGenres()));
+        if (!mpaStorage.checkMpaExists(film.getMpa().getId())) {
+            throw new ValidationException("Рейтинг MPA с id = " + film.getMpa().getId() + " не найден!");
+        }
+        return true;
     }
 }

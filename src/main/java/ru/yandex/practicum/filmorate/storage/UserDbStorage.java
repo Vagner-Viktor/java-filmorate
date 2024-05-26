@@ -144,12 +144,6 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                 friendId,
                 USERS_FRIENDSHIP_STATUS_CONFIRMED
         );
-        insert(
-                USERS_ADD_TO_FRIENDS_QUERY,
-                friendId,
-                id,
-                USERS_FRIENDSHIP_STATUS_UNCONFIRMED
-        );
         user.addFriend(friendId);
         log.info("Пользователь с id = {} и пользователь с id = {} теперь друзья", friendId, id);
         return user;
@@ -165,11 +159,6 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                 USERS_DELETE_FROM_FRIENDS_QUERY,
                 id,
                 friendId
-        );
-        delete(
-                USERS_DELETE_FROM_FRIENDS_QUERY,
-                friendId,
-                id
         );
         log.info("Пользователь с id = {} и пользователь с id = {} больше не друзья", friendId, id);
         return null;

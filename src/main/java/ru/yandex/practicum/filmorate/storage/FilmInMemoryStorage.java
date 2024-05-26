@@ -29,6 +29,12 @@ public class FilmInMemoryStorage implements FilmStorage {
     }
 
     @Override
+    public Film findById(Long id) {
+        log.info("Получение фильма с id = {}", id);
+        return films.get(id);
+    }
+
+    @Override
     public Film create(Film film) {
         film.setId(getNextId());
         films.put(film.getId(), film);

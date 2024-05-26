@@ -18,6 +18,10 @@ public class FilmService {
         return storage.findAll();
     }
 
+    public Film findById(Long id){
+        return storage.findById(id);
+    }
+
     public Film create(Film film) {
         validate(film);
         return storage.create(film);
