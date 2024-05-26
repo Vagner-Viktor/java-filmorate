@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.model.Friend;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
@@ -93,6 +94,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public User create(User user) {
+        validate(user);
         long id = insertGetKey(
                 USERS_INSERT_QUERY,
                 user.getEmail(),
@@ -142,9 +144,9 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                 USERS_ADD_TO_FRIENDS_QUERY,
                 id,
                 friendId,
-                USERS_FRIENDSHIP_STATUS_CONFIRMED
+                USERS_FRIENDSHIP_STATUS_UNCONFIRMED
         );
-        user.addFriend(friendId);
+        user.addFriend(new Friend(friendId, USERS_FRIENDSHIP_STATUS_UNCONFIRMED));
         log.info("Пользователь с id = {} и пользователь с id = {} теперь друзья", friendId, id);
         return user;
     }
@@ -202,7 +204,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         if (checkDuplicatedEmail(user.getEmail())) {
             throw new DuplicatedDataException("Этот e-mail уже используется");
         }
-        if (user.getLogin().indexOf(" ") != -1) {
+        if (user.getLogin().contains(" ")) {
             throw new ValidationException("Логин не может содержать пробелов");
         }
         if (user.getName() == null || user.getName().isBlank()) user.setName(user.getLogin());

@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -215,6 +216,9 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     private boolean validate(Film film) {
+        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 1, 28))) {
+            throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года!");
+        }
         genreStorage.checkGenresExists(film.getGenres());
         film.setGenres(new HashSet<>(film.getGenres()));
         if (!mpaStorage.checkMpaExists(film.getMpa().getId())) {

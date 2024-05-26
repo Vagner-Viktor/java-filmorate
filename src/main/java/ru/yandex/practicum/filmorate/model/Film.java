@@ -39,7 +39,7 @@ public class Film {
     private Duration duration;
 
     @Builder.Default
-    private Set<Long> likes = new HashSet<>();
+    private Collection<Long> likes = new HashSet<>();
 
     @NotNull
     private Mpa mpa;
