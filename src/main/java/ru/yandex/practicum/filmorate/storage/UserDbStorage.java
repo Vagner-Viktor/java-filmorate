@@ -54,21 +54,21 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             """;
     private static final String USERS_FIND_COMMON_FRIENDS_QUERY = """
             SELECT *
-                        FROM "users" AS u
-                        WHERE u."user_id" IN (
-                        	SELECT friends_of_first.friend
-                        	FROM (
-                        		SELECT "friend_id" AS friend FROM "friends" WHERE "user_id" = ?
-                        		UNION
-                        		SELECT "user_id" AS friend FROM "friends" WHERE "friend_id" = ?
-                        		) AS friends_of_first
-                        	JOIN (
-                        		SELECT "friend_id" AS friend FROM "friends" WHERE "user_id" = ?
-                        		UNION
-                        		SELECT "user_id" AS friend FROM "friends" WHERE "friend_id" = ?
-                        		) AS friends_of_second
-                        	ON friends_of_first.friend = friends_of_second.friend
-                        );
+            FROM "users" AS u
+            WHERE u."user_id" IN (
+                SELECT friends_of_first.friend
+                FROM (
+                    SELECT "friend_id" AS friend FROM "friends" WHERE "user_id" = ?
+                    UNION
+                    SELECT "user_id" AS friend FROM "friends" WHERE "friend_id" = ?
+                    ) AS friends_of_first
+                JOIN (
+                    SELECT "friend_id" AS friend FROM "friends" WHERE "user_id" = ?
+                    UNION
+                    SELECT "user_id" AS friend FROM "friends" WHERE "friend_id" = ?
+                    ) AS friends_of_second
+                ON friends_of_first.friend = friends_of_second.friend
+            );
             """;
     private static final String USERS_FIND_BY_ID_QUERY = """
             SELECT * 

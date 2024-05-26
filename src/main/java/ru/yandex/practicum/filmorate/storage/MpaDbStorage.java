@@ -6,7 +6,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Mpa;
 
 import java.util.Collection;
@@ -41,7 +40,7 @@ public class MpaDbStorage extends BaseDbStorage<Mpa> implements MpaStorage {
         return findOne(
                 MPA_FIND_BY_ID_QUERY,
                 id
-        ).orElseThrow(()->new NotFoundException("Рейтинг MPA с id = " + id + " не найден!"));
+        ).orElseThrow(() -> new NotFoundException("Рейтинг MPA с id = " + id + " не найден!"));
     }
 
     public boolean checkMpaExists(int id) {
