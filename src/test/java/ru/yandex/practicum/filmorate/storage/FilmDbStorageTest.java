@@ -34,8 +34,9 @@ import static org.junit.jupiter.api.Assertions.*;
         GenreDbStorage.class,
         UserDbStorage.class,
         MpaDbStorage.class,
-        LikeDbStorage.class,
-        FriendDbStorage.class})
+        FilmLikeDbStorage.class,
+        FriendDbStorage.class,
+        FilmGenreDBStorage.class})
 @ComponentScan(basePackages = {"ru.yandex.practicum.filmorate.storage.mapper"})
 class FilmDbStorageTest {
     private final FilmDbStorage filmDbStorage;

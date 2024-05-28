@@ -24,12 +24,6 @@ public class GenreDbStorage extends BaseDbStorage<Genre> implements GenreStorage
             FROM "genres"
             WHERE "genre_id" = ?;
             """;
-    private static final String GENRES_FIND_BY_FILM_ID_QUERY = """
-            SELECT *
-            FROM "films_genre" AS fg
-            JOIN "genres" AS g ON fg."genre_id" = g."genre_id"
-            WHERE "film_id" = ?;
-            """;
 
     public GenreDbStorage(JdbcTemplate jdbc, RowMapper<Genre> mapper) {
         super(jdbc, mapper);
@@ -48,15 +42,6 @@ public class GenreDbStorage extends BaseDbStorage<Genre> implements GenreStorage
                 GENRES_FIND_BY_ID_QUERY,
                 id
         ).orElseThrow(() -> new NotFoundException("Жанр с id = " + id + " не найден!"));
-    }
-
-    @Override
-    public Collection<Genre> findGenresOfFilm(Long id) {
-        log.info("Получение списка жанров для фильма с id = {}", id);
-        return findMany(
-                GENRES_FIND_BY_FILM_ID_QUERY,
-                id
-        );
     }
 
     public boolean checkGenresExists(Collection<Genre> genres) {

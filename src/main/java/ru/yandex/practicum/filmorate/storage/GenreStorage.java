@@ -9,8 +9,6 @@ public interface GenreStorage {
 
     Genre findById(int id);
 
-    Collection<Genre> findGenresOfFilm(Long id);
-
     boolean checkGenresExists(Collection<Genre> genres);
 
     boolean checkGenreExists(int id);

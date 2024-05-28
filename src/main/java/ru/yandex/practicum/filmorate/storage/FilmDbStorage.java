@@ -9,11 +9,14 @@ import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.FilmGenre;
+import ru.yandex.practicum.filmorate.model.FilmLike;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -22,6 +25,9 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private final UserStorage userStorage;
     private final GenreStorage genreStorage;
     private final MpaStorage mpaStorage;
+    private final FilmLikeStorage filmLikeStorage;
+    private final FilmGenreStorage filmGenreStorage;
+
     private static final String FILMS_FIND_ALL_QUERY = """
             SELECT *
             FROM "films" AS f
@@ -44,7 +50,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             SELECT *
             FROM "films" AS f
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
-            WHERE "film_id" = ?;
+            WHERE f."film_id" = ?;
             """;
     private static final String FILMS_ADD_LIKE_QUERY = """
             INSERT INTO "likes" ("film_id" , "user_id")
@@ -81,26 +87,34 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 VALUES (?, ?);
             """;
 
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
+        this.filmLikeStorage = likeStorage;
+        this.filmGenreStorage = filmGenreStorage;
     }
 
     @Override
     public Collection<Film> findAll() {
         log.info("Получение списка фильмов");
-        return findMany(FILMS_FIND_ALL_QUERY);
+        Collection<Film> films = findMany(FILMS_FIND_ALL_QUERY);
+        setFilmsGenres(films);
+        setFilmsLikes(films);
+        return films;
     }
 
     @Override
     public Film findById(Long id) {
         log.info("Получение фильма с id = {}", id);
-        return findOne(
-                FILMS_FIND_BY_ID_QUERY,
-                id
-        ).orElseThrow(() -> new NotFoundException("Фильм с id = " + id + " не найден!"));
+        Collection<Film> films = findMany(FILMS_FIND_BY_ID_QUERY, id);
+        if (films.size() != 1) {
+            new NotFoundException("Фильм с id = " + id + " не найден!");
+        }
+        setFilmsGenres(films);
+        setFilmsLikes(films);
+        return films.iterator().next();
     }
 
     @Override
@@ -213,6 +227,39 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return findOne(
                 FILMS_FIND_BY_ID_QUERY,
                 id).isPresent();
+    }
+
+    private void setFilmsGenres(Collection<Film> films) {
+        String filmsId = films.stream()
+                .map(film -> {
+                    return film.getId().toString();
+                })
+                .collect(Collectors.joining(", "));
+        Collection<FilmGenre> filmGenres = filmGenreStorage.findGenresOfFilms(filmsId);
+        for (Film film : films) {
+            film.setGenres(filmGenres.stream()
+                    .filter(filmGenre -> film.getId() == filmGenre.getFilm_id())
+                    .map(filmGenre -> new Genre(
+                            filmGenre.getGenre_id(),
+                            filmGenre.getGenre())
+                    )
+                    .collect(Collectors.toList()));
+        }
+    }
+
+    private void setFilmsLikes(Collection<Film> films) {
+        String filmsId = films.stream()
+                .map(film -> {
+                    return film.getId().toString();
+                })
+                .collect(Collectors.joining(", "));
+        Collection<FilmLike> filmLikes = filmLikeStorage.findLikesOfFilms(filmsId);
+        for (Film film : films) {
+            film.setLikes(filmLikes.stream()
+                    .filter(filmLike -> film.getId() == filmLike.getFilm_id())
+                    .map(filmLike -> filmLike.getUser_id())
+                    .collect(Collectors.toList()));
+        }
     }
 
     private boolean validate(Film film) {
