@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FilmGenre {
-    private Long film_id;
-    private int genre_id;
+    private Long filmId;
+    private int genreId;
     private String genre;
 }
