@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FilmLike {
-    private Long film_id;
-    private Long user_id;
+    private Long filmId;
+    private Long userId;
 }

@@ -256,8 +256,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         Collection<FilmLike> filmLikes = filmLikeStorage.findLikesOfFilms(filmsId);
         for (Film film : films) {
             film.setLikes(filmLikes.stream()
-                    .filter(filmLike -> film.getId() == filmLike.getFilm_id())
-                    .map(filmLike -> filmLike.getUser_id())
+                    .filter(filmLike -> film.getId() == filmLike.getFilmId())
+                    .map(filmLike -> filmLike.getUserId())
                     .collect(Collectors.toList()));
         }
     }
