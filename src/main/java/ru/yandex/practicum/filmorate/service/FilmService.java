@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -16,6 +16,10 @@ public class FilmService {
 
     public Collection<Film> findAll() {
         return storage.findAll();
+    }
+
+    public Film findById(Long id) {
+        return storage.findById(id);
     }
 
     public Film create(Film film) {
