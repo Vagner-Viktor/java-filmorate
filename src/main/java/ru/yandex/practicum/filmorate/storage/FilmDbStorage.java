@@ -86,6 +86,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             INSERT INTO "films_genre" ("film_id", "genre_id")
                 VALUES (?, ?);
             """;
+    private static final String FILMS_DELETE = """
+            DELETE FROM "films"
+            WHERE "film_id" = ?;
+            """;
 
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage) {
         super(jdbc, mapper);
@@ -172,10 +176,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         }
         throw new NotFoundException("Фильм с id = " + film.getId() + " не найден");
     }
-// удаление фильма по id
+
+    // удаление фильма по id, модифицировал связи в schema, при удалении фильма удаляются зависимые записи по id
     @Override
-    public Film delete(Long id) {
-        return null;
+    public void delete(Long id) {
+        if (!checkFilmExists(id))
+            throw new NotFoundException("Фильм с id = " + id + " не найден");
+        delete(FILMS_DELETE,id);
+        log.info("Фильм с id = {} удален", id);
     }
 
     @Override

@@ -81,6 +81,10 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             FROM "users"
             WHERE "email" = ?;
             """;
+    private static final String USERS_DELETE = """
+            DELETE FROM "users"
+            WHERE "user_id" = ?;
+            """;
 
     public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
@@ -126,6 +130,15 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             return user;
         }
         throw new NotFoundException("Пользователь с id = " + user.getId() + " не найден");
+    }
+
+    // удаление юзера по id, модифицировал связи в schema, при удалении юзераа удаляются зависимые записи по id
+    @Override
+    public void delete(Long id) {
+        if (!checkUserExists(id))
+            throw new NotFoundException("Пользователь с id = " + id + " не найден");
+        delete(USERS_DELETE,id);
+        log.info("Пользователь с id = {} удален", id);
     }
 
     @Override
