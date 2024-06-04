@@ -132,7 +132,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         throw new NotFoundException("Пользователь с id = " + user.getId() + " не найден");
     }
 
-    // удаление юзера по id, модифицировал связи в schema, при удалении юзераа удаляются зависимые записи по id
+    // удаление юзера по id, модифицировал связи в schema,  при удалении юзераа удаляются зависимые записи по id
     @Override
     public void delete(Long id) {
         if (!checkUserExists(id))
