@@ -13,6 +13,8 @@ public interface FilmStorage {
 
     Film update(Film newFilm);
 
+    Film delete(Long id);
+
     Film addLike(Long id, Long userId);
 
     Film deleteLike(Long id, Long userId);

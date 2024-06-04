@@ -172,6 +172,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         }
         throw new NotFoundException("Фильм с id = " + film.getId() + " не найден");
     }
+// удаление фильма по id
+    @Override
+    public Film delete(Long id) {
+        return null;
+    }
 
     @Override
     public Film addLike(Long id, Long userId) {
