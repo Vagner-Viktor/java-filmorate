@@ -74,7 +74,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
-            GROUP BY name
+            GROUP BY "film_id"
             ORDER BY count DESC
             LIMIT ?;
             """;
@@ -113,8 +113,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     public Film findById(Long id) {
         log.info("Получение фильма с id = {}", id);
         Collection<Film> films = findMany(FILMS_FIND_BY_ID_QUERY, id);
-        if (films.size() != 1) {
-            new NotFoundException("Фильм с id = " + id + " не найден!");
+        if (films.isEmpty()) {
+            throw new NotFoundException("Фильм с id = " + id + " не найден!");
         }
         setFilmsGenres(films);
         setFilmsLikes(films);
