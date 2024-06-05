@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.model.Friend;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -94,6 +95,19 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     public Collection<User> findAll() {
         log.info("Получение списка пользователей");
         return findMany(USERS_FIND_ALL_QUERY);
+    }
+
+    @Override
+    public User findById(Long id) {
+        List<User> users = findMany(
+                USERS_FIND_BY_ID_QUERY,
+                id
+        );
+        if (users.isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + id + " не найден");
+        }
+        return users.getFirst();
+
     }
 
     @Override
