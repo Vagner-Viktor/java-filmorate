@@ -8,10 +8,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmGenre;
-import ru.yandex.practicum.filmorate.model.FilmLike;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -64,7 +61,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String FILMS_GET_POPULAR_QUERY = """
             SELECT
                 f."film_id" AS "film_id",
-                f."name" AS name,
+                f."name" AS "name",
                 f."description" AS "description",
                 f."release_date" AS "release_date",
                 f."duration" AS "duration",
@@ -74,7 +71,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
-            GROUP BY name
+            GROUP BY f."name", f."film_id"
             ORDER BY count DESC
             LIMIT ?;
             """;
@@ -85,6 +82,62 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String FILMS_INSERT_FILMS_GENRE_QUERY = """
             INSERT INTO "films_genre" ("film_id", "genre_id")
                 VALUES (?, ?);
+            """;
+    private static final String FILMS_SEARCH_BY_TITLE = """
+            SELECT
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+            COUNT(l."film_id") AS count
+            FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
+            WHERE LOWER(f."name") LIKE LOWER('%' || ? || '%')
+            GROUP BY f."name", f."film_id"
+            ORDER BY count DESC;
+            """;
+    private static final String FILMS_SEARCH_BY_DIRECTOR = """
+            SELECT
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+            COUNT(l."film_id") AS count
+            FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_director" AS fd ON f."film_id" = fd."film_id"
+            LEFT JOIN "directors" AS d ON fd."director_id" = d."director_id"
+            WHERE LOWER(d."name") LIKE LOWER('%' || ? || '%')
+            GROUP BY f."name", f."film_id"
+            ORDER BY count DESC;
+            """;
+    private static final String FILMS_SEARCH_BY_TITLE_AND_DIRECTOR = """
+            SELECT
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+            COUNT(l."film_id") AS count
+            FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_director" AS fd ON f."film_id" = fd."film_id"
+            LEFT JOIN "directors" AS d ON fd."director_id" = d."director_id"
+            WHERE LOWER(d."name") LIKE LOWER('%' || ? || '%')
+                OR LOWER(f."name") LIKE LOWER('%' || ? || '%')
+            GROUP BY f."name", f."film_id"
+            ORDER BY count DESC;
             """;
 
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage) {
@@ -227,6 +280,18 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return findOne(
                 FILMS_FIND_BY_ID_QUERY,
                 id).isPresent();
+    }
+
+    public Collection<Film> searchFilms(String query, SearchType searchType) {
+        log.info("Получение фильмов по значению = {}", query);
+        Collection<Film> films = switch (searchType) {
+            case TITLE_AND_DIRECTOR -> findMany(FILMS_SEARCH_BY_TITLE_AND_DIRECTOR, query, query);
+            case DIRECTOR -> findMany(FILMS_SEARCH_BY_DIRECTOR, query);
+            default -> findMany(FILMS_SEARCH_BY_TITLE, query);
+        };
+        setFilmsGenres(films);
+        setFilmsLikes(films);
+        return films;
     }
 
     private void setFilmsGenres(Collection<Film> films) {
