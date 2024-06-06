@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserFeed;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
@@ -52,5 +53,10 @@ public class UserController {
     public Collection<User> findCommonFriends(@PathVariable Long id,
                                               @PathVariable Long otherId) {
         return service.findCommonFriends(id, otherId);
+    }
+
+    @GetMapping("/{id}/feed")
+    public Collection<UserFeed> findUserFeeds(@PathVariable Long id) {
+        return service.findUserFeeds(id);
     }
 }

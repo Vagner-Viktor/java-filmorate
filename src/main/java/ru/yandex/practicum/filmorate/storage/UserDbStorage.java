@@ -8,15 +8,16 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Friend;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.*;
 
+import java.time.Instant;
 import java.util.Collection;
 
 @Slf4j
 @Component
 @Primary
 public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
+    private final UserFeedStorage userFeedStorage;
     private static final int USERS_FRIENDSHIP_STATUS_CONFIRMED = 1;
     private static final int USERS_FRIENDSHIP_STATUS_UNCONFIRMED = 2;
     private static final String USERS_FIND_ALL_QUERY = """
@@ -82,8 +83,9 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             WHERE "email" = ?;
             """;
 
-    public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
+    public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper, UserFeedStorage userFeedStorage) {
         super(jdbc, mapper);
+        this.userFeedStorage = userFeedStorage;
     }
 
     @Override
@@ -147,6 +149,14 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                 USERS_FRIENDSHIP_STATUS_UNCONFIRMED
         );
         user.addFriend(new Friend(friendId, USERS_FRIENDSHIP_STATUS_UNCONFIRMED));
+        userFeedStorage.create(UserFeed.builder()
+                        .eventId(null)
+                        .userId(id)
+                        .entityId(friendId)
+                        .timestamp(Instant.now())
+                        .eventType(EventType.FRIEND.name())
+                        .operation(OperationType.ADD.name())
+                .build());
         log.info("Пользователь с id = {} и пользователь с id = {} теперь друзья", friendId, id);
         return user;
     }
@@ -162,6 +172,14 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                 id,
                 friendId
         );
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(id)
+                .entityId(friendId)
+                .timestamp(Instant.now())
+                .eventType(EventType.FRIEND.name())
+                .operation(OperationType.REMOVE.name())
+                .build());
         log.info("Пользователь с id = {} и пользователь с id = {} больше не друзья", friendId, id);
         return null;
     }
@@ -198,6 +216,11 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         return findOne(
                 USERS_FIND_BY_ID_QUERY,
                 id).isPresent();
+    }
+
+    @Override
+    public Collection<UserFeed> findUserFeeds(Long id) {
+        return userFeedStorage.findUserFeeds(id);
     }
 
     private void validate(User user) {

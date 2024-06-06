@@ -13,3 +13,11 @@ MERGE INTO "mpas" VALUES (5, 'NC-17');
 
 MERGE INTO "friendship_status" VALUES (1, 'CONFIRMED');
 MERGE INTO "friendship_status" VALUES (2, 'UNCONFIRMED');
+
+MERGE INTO "event_types" VALUES (1, 'LIKE');
+MERGE INTO "event_types" VALUES (2, 'REVIEW');
+MERGE INTO "event_types" VALUES (3, 'FRIEND');
+
+MERGE INTO "operation_types" VALUES (1, 'REMOVE');
+MERGE INTO "operation_types" VALUES (2, 'ADD');
+MERGE INTO "operation_types" VALUES (3, 'UPDATE');

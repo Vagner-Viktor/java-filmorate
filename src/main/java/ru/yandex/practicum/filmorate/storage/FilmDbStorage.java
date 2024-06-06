@@ -8,11 +8,9 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmGenre;
-import ru.yandex.practicum.filmorate.model.FilmLike;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.*;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
@@ -27,6 +25,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private final MpaStorage mpaStorage;
     private final FilmLikeStorage filmLikeStorage;
     private final FilmGenreStorage filmGenreStorage;
+    private final UserFeedStorage userFeedStorage;
 
     private static final String FILMS_FIND_ALL_QUERY = """
             SELECT *
@@ -87,13 +86,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 VALUES (?, ?);
             """;
 
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, UserFeedStorage userFeedStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
         this.filmLikeStorage = likeStorage;
         this.filmGenreStorage = filmGenreStorage;
+        this.userFeedStorage = userFeedStorage;
     }
 
     @Override
@@ -189,6 +189,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 userId
         );
         film.addLike(userId);
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(userId)
+                .entityId(id)
+                .timestamp(Instant.now())
+                .eventType(EventType.LIKE.name())
+                .operation(OperationType.ADD.name())
+                .build());
         log.info("Пользователь с id = {} поставил лайк фильму id = {}", userId, id);
         return film;
     }
@@ -209,6 +217,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 userId
         );
         film.deleteLike(userId);
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(userId)
+                .entityId(id)
+                .timestamp(Instant.now())
+                .eventType(EventType.LIKE.name())
+                .operation(OperationType.REMOVE.name())
+                .build());
         log.info("Пользователь с id = {} удалил лайк фильму id = {}", userId, id);
         return film;
     }
