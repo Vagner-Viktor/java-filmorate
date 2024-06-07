@@ -13,8 +13,10 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 @Data
 @Builder
@@ -45,6 +47,9 @@ public class Film {
 
     @Builder.Default
     private Collection<Genre> genres = new HashSet<>();
+
+    @Builder.Default
+    private List<Director> directors = new ArrayList<>();
 
     @JsonProperty("duration")
     @Positive

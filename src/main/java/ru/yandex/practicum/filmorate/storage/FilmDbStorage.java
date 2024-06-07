@@ -8,10 +8,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.FilmGenre;
-import ru.yandex.practicum.filmorate.model.FilmLike;
-import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -87,6 +84,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 VALUES (?, ?);
             """;
 
+    private static final String FILMS_INSERT_FILMS_DIRECTORS_QUERY = """
+            INSERT INTO "films_director" ("film_id", "director_id")
+                VALUES (?, ?);
+            """;
+
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
@@ -136,6 +138,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     genre.getId()
             );
         }
+        for (Director director : film.getDirectors()) {
+            insert(
+                    FILMS_INSERT_FILMS_DIRECTORS_QUERY,
+                    film.getId(),
+                    director.getId()
+            );
+        }
+
         log.info("Фильм {} добавлен в список с id = {}", film.getName(), film.getId());
         return film;
     }
@@ -165,6 +175,13 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                         FILMS_INSERT_FILMS_GENRE_QUERY,
                         film.getId(),
                         genre.getId()
+                );
+            }
+            for (Director director : film.getDirectors()) {
+                insert(
+                        FILMS_INSERT_FILMS_DIRECTORS_QUERY,
+                        film.getId(),
+                        director.getId()
                 );
             }
             log.info("Фильм с id = {} обновлен", film.getId());
