@@ -32,6 +32,10 @@ public class FilmService {
         return storage.update(newFilm);
     }
 
+    public void delete(Long id) {
+          storage.delete(id);
+    }
+
     public Film addLike(Long id, Long userId) {
         return storage.addLike(id, userId);
     }

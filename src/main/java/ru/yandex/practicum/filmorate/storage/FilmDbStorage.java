@@ -73,7 +73,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
-            GROUP BY name
+            GROUP BY "film_id"
             ORDER BY count DESC
             LIMIT ?;
             """;
@@ -84,6 +84,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String FILMS_INSERT_FILMS_GENRE_QUERY = """
             INSERT INTO "films_genre" ("film_id", "genre_id")
                 VALUES (?, ?);
+            """;
+    private static final String FILMS_DELETE = """
+            DELETE FROM "films"
+            WHERE "film_id" = ?;
             """;
 
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, UserFeedStorage userFeedStorage) {
@@ -109,8 +113,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     public Film findById(Long id) {
         log.info("Получение фильма с id = {}", id);
         Collection<Film> films = findMany(FILMS_FIND_BY_ID_QUERY, id);
-        if (films.size() != 1) {
-            new NotFoundException("Фильм с id = " + id + " не найден!");
+        if (films.isEmpty()) {
+            throw new NotFoundException("Фильм с id = " + id + " не найден!");
         }
         setFilmsGenres(films);
         setFilmsLikes(films);
@@ -171,6 +175,15 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             return film;
         }
         throw new NotFoundException("Фильм с id = " + film.getId() + " не найден");
+    }
+
+    // удаление фильма по id, модифицировал связи в schema, при удалении фильма удаляются зависимые записи по id
+    @Override
+    public void delete(Long id) {
+        if (!checkFilmExists(id))
+            throw new NotFoundException("Фильм с id = " + id + " не найден");
+        delete(FILMS_DELETE,id);
+        log.info("Фильм с id = {} удален", id);
     }
 
     @Override

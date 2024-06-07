@@ -12,6 +12,7 @@ import ru.yandex.practicum.filmorate.model.*;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -82,6 +83,10 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             FROM "users"
             WHERE "email" = ?;
             """;
+    private static final String USERS_DELETE = """
+            DELETE FROM "users"
+            WHERE "user_id" = ?;
+            """;
 
     public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper, UserFeedStorage userFeedStorage) {
         super(jdbc, mapper);
@@ -92,6 +97,19 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     public Collection<User> findAll() {
         log.info("Получение списка пользователей");
         return findMany(USERS_FIND_ALL_QUERY);
+    }
+
+    @Override
+    public User findById(Long id) {
+        List<User> users = findMany(
+                USERS_FIND_BY_ID_QUERY,
+                id
+        );
+        if (users.isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + id + " не найден");
+        }
+        return users.getFirst();
+
     }
 
     @Override
@@ -128,6 +146,15 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             return user;
         }
         throw new NotFoundException("Пользователь с id = " + user.getId() + " не найден");
+    }
+
+    // удаление юзера по id, модифицировал связи в schema,  при удалении юзераа удаляются зависимые записи по id
+    @Override
+    public void delete(Long id) {
+        if (!checkUserExists(id))
+            throw new NotFoundException("Пользователь с id = " + id + " не найден");
+        delete(USERS_DELETE,id);
+        log.info("Пользователь с id = {} удален", id);
     }
 
     @Override
