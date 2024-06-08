@@ -7,9 +7,13 @@ import java.util.Collection;
 public interface UserStorage {
     Collection<User> findAll();
 
+    User findById(Long id);
+
     User create(User user);
 
     User update(User newUser);
+
+    void delete(Long id);
 
     User addToFriends(Long id, Long friendId);
 

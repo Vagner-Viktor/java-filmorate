@@ -17,12 +17,20 @@ public class UserService {
         return storage.findAll();
     }
 
+    public User findById(Long id) {
+        return storage.findById(id);
+    }
+
     public User create(User user) {
         return storage.create(user);
     }
 
     public User update(User newUser) {
         return storage.update(newUser);
+    }
+
+    public void delete(Long id) {
+        storage.delete(id);
     }
 
     public User addToFriends(Long id, Long friendId) {
