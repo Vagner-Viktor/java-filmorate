@@ -49,7 +49,7 @@ public class Film {
     private Collection<Genre> genres = new HashSet<>();
 
     @Builder.Default
-    private List<Director> directors = new ArrayList<>();
+    private Collection<Director> directors = new HashSet<>();
 
     @JsonProperty("duration")
     @Positive

@@ -24,6 +24,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private final MpaStorage mpaStorage;
     private final FilmLikeStorage filmLikeStorage;
     private final FilmGenreStorage filmGenreStorage;
+    private final FilmDirectorStorage filmDirectorStorage;
 
     private static final String FILMS_FIND_ALL_QUERY = """
             SELECT *
@@ -93,13 +94,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 VALUES (?, ?);
             """;
 
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, FilmDirectorStorage filmDirectorStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
         this.filmLikeStorage = likeStorage;
         this.filmGenreStorage = filmGenreStorage;
+        this.filmDirectorStorage = filmDirectorStorage;
     }
 
     @Override
@@ -288,6 +290,24 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             film.setLikes(filmLikes.stream()
                     .filter(filmLike -> film.getId() == filmLike.getFilmId())
                     .map(filmLike -> filmLike.getUserId())
+                    .collect(Collectors.toList()));
+        }
+    }
+
+    private void setFilmsDirectors(Collection<Film> films) {
+        String filmsId = films.stream()
+                .map(film -> {
+                    return film.getId().toString();
+                })
+                .collect(Collectors.joining(", "));
+        Collection<FilmDirector> filmDirectors = filmDirectorStorage.findDirectorsOfFilms(filmsId);
+        for (Film film : films) {
+            film.setDirectors(filmDirectors.stream()
+                    .filter(filmDirector -> film.getId() == filmDirector.getFilmId())
+                    .map(filmDirector -> new Director(
+                            filmDirector.getDirectorId(),
+                            filmDirector.getName())
+                    )
                     .collect(Collectors.toList()));
         }
     }

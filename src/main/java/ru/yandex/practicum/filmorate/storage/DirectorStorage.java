@@ -2,10 +2,11 @@ package ru.yandex.practicum.filmorate.storage;
 
 import ru.yandex.practicum.filmorate.model.Director;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface DirectorStorage {
-    List<Director> getAllDirectors();
+    Collection<Director> getAllDirectors();
 
     Director getDirectorById(Long id);
 

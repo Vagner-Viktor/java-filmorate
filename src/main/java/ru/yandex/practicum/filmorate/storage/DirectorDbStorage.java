@@ -5,11 +5,10 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
 
-import java.util.List;
+import java.util.Collection;
 
 @Component
 @Slf4j
@@ -21,7 +20,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
     }
 
     @Override
-    public List<Director> getAllDirectors() {
+    public Collection<Director> getAllDirectors() {
         log.info("Получение списка режиссеров");
         String sqlQuery = """
                 SELECT *
@@ -33,12 +32,15 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
 
     @Override
     public Director getDirectorById(Long id) {
+        if (id == null) {
+            throw new NotFoundException("Id режисера должен быть указан");
+        }
         log.info("Получение режиссера по id = {}", id);
         String sqlQuery = """
-                          SELECT *
-                          FROM "directors"
-                          WHERE "director_id" = ?
-                          """;
+                SELECT *
+                FROM "directors"
+                WHERE "director_id" = ?
+                """;
 
         return findOne(sqlQuery, id)
                 .orElseThrow(() -> new NotFoundException("Режиссер с id = " + id + " не найден!"));
@@ -47,9 +49,9 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
     @Override
     public Director addDirector(Director director) {
         String sqlQuery = """
-                          INSERT INTO "directors" ("name")
-                          VALUES (?);
-                          """;
+                INSERT INTO "directors" ("name")
+                VALUES (?);
+                """;
 
         Long id = insertGetKey(sqlQuery, director.getName());
         director.setId(id);
@@ -62,13 +64,13 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
     @Override
     public Director updateDirector(Director director) {
         String sqlQuery = """
-                          UPDATE "directors"
-                          SET "name" = ?
-                          WHERE "director_id" = ?;
-                          """;
+                UPDATE "directors"
+                SET "name" = ?
+                WHERE "director_id" = ?;
+                """;
 
-        if (director.getId() <= 0) {
-            throw new ConditionsNotMetException("Id фильма должен быть указан");
+        if (director.getId() == null) {
+            throw new NotFoundException("Id режисера должен быть указан");
         }
 
         if (checkDirectorExists(director.getId())) {
@@ -84,9 +86,9 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
     @Override
     public Long deleteDirector(Long id) {
         String sqlQuery = """
-                          DELETE FROM "directors"
-                          WHERE "director_id" = ?
-                          """;
+                DELETE FROM "directors"
+                WHERE "director_id" = ?
+                """;
 
         if (checkDirectorExists(id)) {
             delete(sqlQuery, id);
@@ -107,10 +109,10 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
 
     public boolean checkDirectorExists(long id) {
         String sqlQuery = """
-                          SELECT *
-                          FROM "directors"
-                          WHERE "director_id" = ?
-                          """;
+                SELECT *
+                FROM "directors"
+                WHERE "director_id" = ?
+                """;
 
         return findOne(
                 sqlQuery,

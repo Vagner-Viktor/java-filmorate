@@ -2,21 +2,20 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.service.DirectorService;
 
-import java.util.List;
+import java.util.Collection;
 
-@RestController
 @RequiredArgsConstructor
+@RestController
 @RequestMapping("/directors")
 public class DirectorController {
     private final DirectorService directorService;
 
     @GetMapping
-    public List<Director> getAllDirectors() {
+    public Collection<Director> getAllDirectors() {
         return directorService.getAllDirectors();
     }
 
@@ -25,13 +24,13 @@ public class DirectorController {
         return directorService.getDirectorById(id);
     }
 
-    @PostMapping
+    @PostMapping("/")
     public Director addDirector(@Valid @RequestBody Director director) {
         return directorService.addDirector(director);
     }
 
     @PutMapping
-    public Director updateDirector(@RequestBody Director director) {
+    public Director updateDirector(@Valid @RequestBody Director director) {
         return directorService.updateDirector(director);
     }
 
