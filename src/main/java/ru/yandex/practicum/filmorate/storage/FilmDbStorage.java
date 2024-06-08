@@ -162,7 +162,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
             WHERE LOWER(f."name") LIKE LOWER('%' || ? || '%')
             GROUP BY f."name", f."film_id"
-            ORDER BY count DESC;
+            ORDER BY "film_id";
             """;
     private static final String FILMS_SEARCH_BY_DIRECTOR = """
             SELECT
@@ -181,7 +181,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             LEFT JOIN "directors" AS d ON fd."director_id" = d."director_id"
             WHERE LOWER(d."name") LIKE LOWER('%' || ? || '%')
             GROUP BY f."name", f."film_id"
-            ORDER BY count DESC;
+            ORDER BY "film_id";
             """;
     private static final String FILMS_SEARCH_BY_TITLE_AND_DIRECTOR = """
             SELECT
@@ -201,7 +201,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             WHERE LOWER(d."name") LIKE LOWER('%' || ? || '%')
                 OR LOWER(f."name") LIKE LOWER('%' || ? || '%')
             GROUP BY f."name", f."film_id"
-            ORDER BY count DESC;
+            ORDER BY "film_id";
             """;
     private static final String FILMS_DELETE = """
             DELETE FROM "films"
@@ -322,7 +322,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     public void delete(Long id) {
         if (!checkFilmExists(id))
             throw new NotFoundException("Фильм с id = " + id + " не найден");
-        delete(FILMS_DELETE,id);
+        delete(FILMS_DELETE, id);
         log.info("Фильм с id = {} удален", id);
     }
 
@@ -390,8 +390,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         }
         //только count
         return findMany(
-                    FILMS_GET_POPULAR_QUERY,
-                    count);
+                FILMS_GET_POPULAR_QUERY,
+                count);
     }
 
     public boolean checkFilmExists(Long id) {
