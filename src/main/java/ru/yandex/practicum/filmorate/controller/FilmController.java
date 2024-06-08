@@ -54,10 +54,13 @@ public class FilmController {
         return service.deleteLike(id, userId);
     }
 
+    // пример запроса будет выглядить так GET /films/popular?count={limit}&genreId={genreId}&year={year}
     @GetMapping("/popular")
     public Collection<Film> getPopular(
-            @RequestParam(defaultValue = "10", required = false) Long count) {
-        return service.getPopular(count);
+            @RequestParam(defaultValue = "10", required = false) Long count,
+            @RequestParam(defaultValue = "0", required = false) Long genreId,
+            @RequestParam(defaultValue = "0", required = false) int year) {
+        return service.getPopular(count, genreId, year);
     }
 
     @GetMapping("/search")

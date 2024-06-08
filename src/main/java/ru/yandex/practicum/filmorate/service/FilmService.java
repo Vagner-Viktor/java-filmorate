@@ -48,8 +48,8 @@ public class FilmService {
         return storage.deleteLike(id, userId);
     }
 
-    public Collection<Film> getPopular(Long count) {
-        return storage.getPopular(count);
+    public Collection<Film> getPopular(Long count, Long genreId, int year) {
+        return storage.getPopular(count, genreId, year);
     }
 
     public Collection<Film> searchFilms(String query, List<String> by) {

@@ -71,10 +71,73 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             COUNT(l."film_id") AS count
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
-            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
+            LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
+            LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
             GROUP BY "film_id"
             ORDER BY count DESC
             LIMIT ?;
+            """;
+
+    private static final String FILMS_GET_POPULAR_QUERY_WITH_GENRE = """
+            SELECT
+                        f."film_id" AS "film_id",
+                        f."name" AS "name",
+                        f."description" AS "description",
+                        f."release_date" AS "release_date",
+                        f."duration" AS "duration",
+                        r."mpa_id" AS "mpa_id",
+                        r."mpa" AS "mpa",
+                        COUNT(l."film_id") AS count
+                    FROM "films" AS f
+                    LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+                    LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
+                    LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
+                    LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
+                    WHERE fg."genre_id" = ?
+                    GROUP BY "film_id"
+                    ORDER BY count DESC
+                    LIMIT ?;
+            """;
+    private static final String FILMS_GET_POPULAR_QUERY_WITH_YEAR = """
+            SELECT
+                        f."film_id" AS "film_id",
+                        f."name" AS "name",
+                        f."description" AS "description",
+                        f."release_date" AS "release_date",
+                        f."duration" AS "duration",
+                        r."mpa_id" AS "mpa_id",
+                        r."mpa" AS "mpa",
+                        COUNT(l."film_id") AS count
+                    FROM "films" AS f
+                    LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+                    LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
+                    LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
+                    LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
+                    WHERE EXTRACT(YEAR FROM f."release_date") = ?
+                    GROUP BY "film_id"
+                    ORDER BY count DESC
+                    LIMIT ?;
+            """;
+    private static final String FILMS_GET_POPULAR_QUERY_WITH_YEAR_AND_GENRE = """
+            SELECT
+                        f."film_id" AS "film_id",
+                        f."name" AS "name",
+                        f."description" AS "description",
+                        f."release_date" AS "release_date",
+                        f."duration" AS "duration",
+                        r."mpa_id" AS "mpa_id",
+                        r."mpa" AS "mpa",
+                        COUNT(l."film_id") AS count
+                    FROM "films" AS f
+                    LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+                    LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
+                    LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
+                    LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
+                    WHERE EXTRACT(YEAR FROM f."release_date") = ? AND fg."genre_id" = ?
+                    GROUP BY "film_id"
+                    ORDER BY count DESC
+                    LIMIT ?;
             """;
     private static final String FILMS_DELETE_FILMS_GENRE_QUERY = """
             DELETE FROM "films_genre"
@@ -302,13 +365,31 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public Collection<Film> getPopular(Long count) {
+    public Collection<Film> getPopular(Long count, Long genreId, int year) {
         if (count <= 0) throw new ValidationException("Параметр count должен быть больше 0");
         log.info("Получение списка {} популярных фильмов", count);
+        //если ищем по count и year
+        if (genreId == 0L && year >= 1) {
+            return findMany(
+                    FILMS_GET_POPULAR_QUERY_WITH_YEAR,
+                    year, count);
+        }
+        //если ищем по count и genre
+        if (genreId >= 1L && year == 0) {
+            return findMany(
+                    FILMS_GET_POPULAR_QUERY_WITH_GENRE,
+                    genreId, count);
+        }
+        //если ищем по count, genre и year
+        if (genreId >= 1L && year >= 1) {
+            return findMany(
+                    FILMS_GET_POPULAR_QUERY_WITH_YEAR_AND_GENRE,
+                    year, genreId, count);
+        }
+        //только count
         return findMany(
-                FILMS_GET_POPULAR_QUERY,
-                count
-        );
+                    FILMS_GET_POPULAR_QUERY,
+                    count);
     }
 
     public boolean checkFilmExists(Long id) {

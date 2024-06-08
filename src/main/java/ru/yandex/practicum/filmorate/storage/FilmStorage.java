@@ -23,4 +23,6 @@ public interface FilmStorage {
     Collection<Film> getPopular(Long count);
 
     Collection<Film> searchFilms(String query, SearchType searchType);
+
+    Collection<Film> getPopular(Long count, Long genreId, int year);
 }
