@@ -229,6 +229,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         Collection<Film> films = findMany(FILMS_FIND_ALL_QUERY);
         setFilmsGenres(films);
         setFilmsLikes(films);
+        setFilmsDirectors(films);
         return films;
     }
 
@@ -241,6 +242,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         }
         setFilmsGenres(films);
         setFilmsLikes(films);
+        setFilmsDirectors(films);
         return films.iterator().next();
     }
 
@@ -407,6 +409,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         };
         setFilmsGenres(films);
         setFilmsLikes(films);
+        setFilmsDirectors(films);
         return films;
     }
 
