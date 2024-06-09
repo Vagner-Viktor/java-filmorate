@@ -225,7 +225,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             GROUP BY f."film_id"
             ORDER BY f."release_date";
             """;
-              
+
     private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_LIKES = """
             SELECT
                 f."film_id" AS "film_id",
