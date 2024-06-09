@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.SearchType;
 
 import java.util.Collection;
 
@@ -18,6 +19,8 @@ public interface FilmStorage {
     Film addLike(Long id, Long userId);
 
     Film deleteLike(Long id, Long userId);
+
+    Collection<Film> searchFilms(String query, SearchType searchType);
 
     Collection<Film> getPopular(Long count, Long genreId, int year);
 

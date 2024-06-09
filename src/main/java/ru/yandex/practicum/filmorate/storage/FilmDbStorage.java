@@ -61,7 +61,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String FILMS_GET_POPULAR_QUERY = """
             SELECT
                 f."film_id" AS "film_id",
-                f."name" AS name,
+                f."name" AS "name",
                 f."description" AS "description",
                 f."release_date" AS "release_date",
                 f."duration" AS "duration",
@@ -151,11 +151,67 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 VALUES (?, ?);
             """;
 
+    private static final String FILMS_SEARCH_BY_TITLE = """
+            SELECT
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+            COUNT(l."film_id") AS count
+            FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
+            WHERE LOWER(f."name") LIKE LOWER('%' || ? || '%')
+            GROUP BY f."name", f."film_id"
+            ORDER BY "film_id";
+            """;
+    private static final String FILMS_SEARCH_BY_DIRECTOR = """
+            SELECT
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+            COUNT(l."film_id") AS count
+            FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_director" AS fd ON f."film_id" = fd."film_id"
+            LEFT JOIN "directors" AS d ON fd."director_id" = d."director_id"
+            WHERE LOWER(d."name") LIKE LOWER('%' || ? || '%')
+            GROUP BY f."name", f."film_id"
+            ORDER BY "film_id";
+            """;
+    private static final String FILMS_SEARCH_BY_TITLE_AND_DIRECTOR = """
+            SELECT
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+            COUNT(l."film_id") AS count
+            FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_director" AS fd ON f."film_id" = fd."film_id"
+            LEFT JOIN "directors" AS d ON fd."director_id" = d."director_id"
+            WHERE LOWER(d."name") LIKE LOWER('%' || ? || '%')
+                OR LOWER(f."name") LIKE LOWER('%' || ? || '%')
+            GROUP BY f."name", f."film_id"
+            ORDER BY "film_id";
+            """;
+
     private static final String FILMS_DELETE = """
             DELETE FROM "films"
             WHERE "film_id" = ?;
             """;
-
     private static final String FILMS_INSERT_FILMS_DIRECTORS_QUERY = """
             INSERT INTO "films_director" ("film_id", "director_id")
                 VALUES (?, ?);
@@ -169,7 +225,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             GROUP BY f."film_id"
             ORDER BY f."release_date";
             """;
-
+              
     private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_LIKES = """
             SELECT
                 f."film_id" AS "film_id",
@@ -403,6 +459,19 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return findOne(
                 FILMS_FIND_BY_ID_QUERY,
                 id).isPresent();
+    }
+
+    public Collection<Film> searchFilms(String query, SearchType searchType) {
+        log.info("Получение фильмов по значению = {}", query);
+        Collection<Film> films = switch (searchType) {
+            case TITLE_AND_DIRECTOR -> findMany(FILMS_SEARCH_BY_TITLE_AND_DIRECTOR, query, query);
+            case DIRECTOR -> findMany(FILMS_SEARCH_BY_DIRECTOR, query);
+            default -> findMany(FILMS_SEARCH_BY_TITLE, query);
+        };
+        setFilmsGenres(films);
+        setFilmsLikes(films);
+        setFilmsDirectors(films);
+        return films;
     }
 
     private void setFilmsGenres(Collection<Film> films) {
