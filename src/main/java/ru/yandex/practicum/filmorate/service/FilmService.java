@@ -33,7 +33,7 @@ public class FilmService {
     }
 
     public void delete(Long id) {
-          storage.delete(id);
+        storage.delete(id);
     }
 
     public Film addLike(Long id, Long userId) {

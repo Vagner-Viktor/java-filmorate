@@ -14,36 +14,32 @@ import java.util.Collection;
 @Slf4j
 @Primary
 public class DirectorDbStorage extends BaseDbStorage<Director> implements DirectorStorage {
-    public DirectorDbStorage(JdbcTemplate jdbcTemplate, RowMapper<Director> mapper) {
-        super(jdbcTemplate, mapper);
-    }
-
     private static final String DIRECTORS_FIND_ALL_QUERY = """
             SELECT *
             FROM "directors"
             """;
-
     private static final String DIRECTOR_FIND_BY_ID_QUERY = """
             SELECT *
             FROM "directors"
             WHERE "director_id" = ?
             """;
-
     private static final String DIRECTORS_ADD_LIKE_QUERY = """
             INSERT INTO "directors" ("name")
             VALUES (?);
             """;
-
     private static final String DIRECTORS_UPDATE_LIKE_QUERY = """
             UPDATE "directors"
             SET "name" = ?
             WHERE "director_id" = ?;
             """;
-
     private static final String DIRECTORS_DELETE_QUERY = """
             DELETE FROM "directors"
             WHERE "director_id" = ?
             """;
+
+    public DirectorDbStorage(JdbcTemplate jdbcTemplate, RowMapper<Director> mapper) {
+        super(jdbcTemplate, mapper);
+    }
 
     @Override
     public Collection<Director> getAllDirectors() {
