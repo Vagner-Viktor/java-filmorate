@@ -12,19 +12,19 @@ public interface ReviewStorage {
 
     void updateReview(Review review);
 
-    boolean deleteReview(Integer id);
+    boolean deleteReview(Long id);
 
-    Optional<Review> getReview(Integer id);
+    Optional<Review> getReview(Long id);
 
     List<Review> getReviewsForFilm(Long filmId, Integer count);
 
     List<Review> getNReviewsForEachFilm(Integer count);
 
-    void setLike(Integer reviewId, Integer userId);
+    void setLike(Long reviewId, Long userId);
 
-    void setDislike(Integer reviewId, Integer userId);
+    void setDislike(Long reviewId, Long userId);
 
-    void removeLike(Integer reviewId, Integer userId);
+    void removeLike(Long reviewId, Long userId);
 
-    void removeDislike(Integer reviewId, Integer userId);
+    void removeDislike(Long reviewId, Long userId);
 }

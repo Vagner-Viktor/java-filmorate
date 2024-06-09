@@ -6,8 +6,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.yandex.practicum.filmorate.model.constant.Usability;
-import ru.yandex.practicum.filmorate.model.constant.Feedback;
 
 @Data
 @Builder
@@ -17,18 +15,20 @@ public class Review {
 
     public Long reviewId;
 
-    @NotBlank
+    //@Positive(message = "Film id cannot be negative.")
+    @NotNull(message = "Film id cannot be null.")
     public Long filmId;
 
-    @NotBlank
+    //@Positive(message = "User id cannot be negative.")
+    @NotNull(message = "User id cannot be blank.")
     public Long userId;
 
-    @NotBlank
+    @NotBlank(message = "Content cannot be blank.")
     public String content;
 
-    @NotBlank
-    public Feedback feedback;
+    @NotNull(message = "Positive cannot be blank.")
+    public Boolean isPositive;
 
-    public Integer evaluation;
+    public Integer useful;
 
 }

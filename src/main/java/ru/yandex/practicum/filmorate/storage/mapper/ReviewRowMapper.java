@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.storage.mapper;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Review;
-import ru.yandex.practicum.filmorate.model.constant.Feedback;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,8 +17,8 @@ public class ReviewRowMapper implements RowMapper<Review> {
                 .filmId(rs.getLong("film_id"))
                 .userId(rs.getLong("user_id"))
                 .content(rs.getString("content"))
-                .feedback(Feedback.valueOf(rs.getString("feedback")))
-                .evaluation(rs.getInt("evaluation"))
+                .isPositive(rs.getBoolean("is_positive"))
+                .useful(rs.getInt("useful"))
                 .build();
     }
 }

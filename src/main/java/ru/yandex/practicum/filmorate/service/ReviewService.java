@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
@@ -15,24 +17,48 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
 
     public Review createReview(Review review) {
-        long id = reviewStorage.createReview(review);
-        review.setReviewId(id);
-        return review;
+        try {
+            long id = reviewStorage.createReview(review);
+            review.setReviewId(id);
+            return review;
+        } catch (DataIntegrityViolationException e) {
+            if (e.getMessage().contains("FOREIGN KEY(user_id)")) {
+                throw new NotFoundException("Пользователь с таким идентификатором не существует.");
+            } else if (e.getMessage().contains("FOREIGN KEY(film_id)")) {
+                throw new NotFoundException("Фильм с таким идентификатором не существует.");
+            } else {
+                throw e;
+            }
+        }
     }
 
     public Review updateReview(Review review) {
-        reviewStorage.updateReview(review);
-        return review;
+        try {
+            reviewStorage.updateReview(review);
+            /*
+                реализован второй запрос так как есть поле useful, которое зависит от состояния другой таблицы
+            */
+            return getReview(review.getReviewId());
+        } catch (DataIntegrityViolationException e) {
+            if (e.getMessage().contains("FOREIGN KEY(user_id)")) {
+                throw new NotFoundException("Пользователь с таким идентификатором не существует.");
+            } else if (e.getMessage().contains("FOREIGN KEY(film_id)")) {
+                throw new NotFoundException("Фильм с таким идентификатором не существует.");
+            } else {
+                throw e;
+            }
+        }
+
     }
 
-    public Review deleteReview(Integer id) {
+    public Review deleteReview(Long id) {
         Review review = getReview(id);
         boolean haveBeedDeleted = reviewStorage.deleteReview(id);
         if (!haveBeedDeleted && review != null) return review;
         return null;
     }
 
-    public Review getReview(Integer id) {
+    public Review getReview(Long id) {
         Optional<Review> reviewOptional = reviewStorage.getReview(id);
         return reviewOptional.orElse(null);
     }
@@ -45,22 +71,22 @@ public class ReviewService {
         return reviewStorage.getNReviewsForEachFilm(count);
     }
 
-    public Review likeReview(Integer reviewId, Integer userId) {
+    public Review likeReview(Long reviewId, Long userId) {
         reviewStorage.setLike(reviewId, userId);
         return getReview(reviewId);
     }
 
-    public Review dislikeReview(Integer reviewId, Integer userId) {
+    public Review dislikeReview(Long reviewId, Long userId) {
         reviewStorage.setDislike(reviewId, userId);
         return getReview(reviewId);
     }
 
-    public Review deleteLike(Integer reviewId, Integer userId) {
+    public Review deleteLike(Long reviewId, Long userId) {
         reviewStorage.removeLike(reviewId, userId);
         return getReview(reviewId);
     }
 
-    public Review deleteDislike(Integer reviewId, Integer userId) {
+    public Review deleteDislike(Long reviewId, Long userId) {
         reviewStorage.removeDislike(reviewId, userId);
         return getReview(reviewId);
     }

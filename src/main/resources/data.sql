@@ -16,6 +16,3 @@ MERGE INTO "friendship_status" VALUES (2, 'UNCONFIRMED');
 
 MERGE INTO "usabilitys" VALUES (1, 'USEFUL', 1);
 MERGE INTO "usabilitys" VALUES (2, 'USELESS', -1);
-
-MERGE INTO "feedbacks" VALUES (1, 'NEGATIVE');
-MERGE INTO "feedbacks" VALUES (2, 'POSITIVE');

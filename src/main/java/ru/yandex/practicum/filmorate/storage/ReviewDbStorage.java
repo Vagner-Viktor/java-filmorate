@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Review;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,22 +16,21 @@ import java.util.Optional;
 @Primary
 public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStorage{
 
-    public ReviewDbStorage(JdbcTemplate jdbc, RowMapper<Review> mapper) {
+    private final UsabilityStateStorage usabilityStateStorage;
+
+    public ReviewDbStorage(JdbcTemplate jdbc, RowMapper<Review> mapper, UsabilityStateStorage usabilityStateStorage) {
         super(jdbc, mapper);
+        this.usabilityStateStorage = usabilityStateStorage;
     }
 
     private static final String REQUEST_ADD_REVIEW = """
-                INSERT INTO "reviews" ("film_id", "user_id", "content", "feedback_id")
-                VALUES (?, ?, ?, (
-                    SELECT "feedback_id"
-                    FROM "feedbacks"
-                    WHERE "feedback" = ? )
-                    );
+                INSERT INTO "reviews" ("film_id", "user_id", "content", "is_positive")
+                VALUES (?, ?, ?, ?);
                 """;
 
     private static final String REQUEST_UPDATE_REVIEW = """
              UPDATE "reviews"
-             SET "film_id" = ?, "user_id" = ?, "content" = ?, "feedback_id" = ?
+             SET "film_id" = ?, "user_id" = ?, "content" = ?, "is_positive" = ?
              WHERE "review_id" = ?;
              """;
 
@@ -40,19 +40,18 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
              """;
 
     private static final String REQUEST_GET_REVIEW = """
-                SELECT
-                    r."review_id" AS review_id,
-                    r."film_id" AS film_id,
-                    r."user_id" AS user_id,
-                    r."content" AS content,
-                    f."feedback" AS feedback,
-                    SUM(u."weigh") AS evaluation
-                FROM "reviews" AS r
-                LEFT JOIN "feedbacks" AS f ON r."feedback_id" = f."feedback_id"
-                LEFT JOIN "usability_reviews" AS ur ON r."review_id" = ur."review_id"
-                LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
-                WHERE r."review_id" = ?
-                """;
+            SELECT
+                r."review_id" AS review_id,
+                r."film_id" AS film_id,
+                r."user_id" AS user_id,
+                r."content" AS content,
+                r."is_positive" AS is_positive,
+                SUM(u."weigh") AS useful
+            FROM "reviews" AS r
+            LEFT JOIN "usability_reviews" AS ur ON r."review_id" = ur."review_id"
+            LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
+            WHERE r."review_id" = ?;
+            """;
 
     private static final String REQUEST_GET_ALL_REVIEWS_FOR_FILM = """
             SELECT
@@ -60,10 +59,9 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                 r."film_id" AS film_id,
                 r."user_id" AS user_id,
                 r."content" AS content,
-                f."feedback" AS feedback,
-                SUM(u."weigh") AS evaluation
+                r."is_positive" AS is_positive,
+                SUM(u."weigh") AS useful
             FROM "reviews" AS r
-            LEFT JOIN "feedbacks" AS f ON r."feedback_id" = f."feedback_id"
             LEFT JOIN "usability_reviews" AS ur ON r."review_id" = ur."review_id"
             LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
             WHERE r."film_id" = ?
@@ -77,10 +75,9 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                 r."film_id" AS film_id,
                 r."user_id" AS user_id,
                 r."content" AS content,
-                f."feedback" AS feedback,
+                r."is_positive" AS is_positive,
                 SUM(u."weigh") AS evaluation
             FROM "reviews" AS r
-            LEFT JOIN "feedbacks" AS f ON r."feedback_id" = f."feedback_id"
             LEFT JOIN "usability_reviews" AS ur ON r."review_id" = ur."review_id"
             LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
             ORDER BY r."review_id", r."film_id"
@@ -88,13 +85,25 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
             """;
 
     private static final String REQUEST_SET_LIKE = """
-            INSERT INTO "usability_reviews" ("film_id", "user_id", "usability_id")
+            INSERT INTO "usability_reviews" ("user_id", "review_id", "usability_id")
             VALUES (?, ?, 1)
             """;
 
     private static final String REQUEST_SET_DISLIKE = """
-            INSERT INTO "usability_reviews" ("film_id", "user_id", "usability_id")
+            INSERT INTO "usability_reviews" ("user_id", "review_id", "usability_id")
             VALUES (?, ?, 2)
+            """;
+
+    private static final String REQUEST_UPDATE_TO_LIKE = """
+            UPDATE "usability_reviews"
+            SET "usability_id" = 1
+            WHERE "user_id" = ? AND "review_id" = ?;
+            """;
+
+    private static final String REQUEST_UPDATE_TO_DISLIKE = """
+            UPDATE "usability_reviews"
+            SET "usability_id" = 2
+            WHERE "user_id" = ? AND "review_id" = ?;
             """;
 
     private static final String REQUEST_REMOVE_LIKE = """
@@ -104,7 +113,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     private static final String REQUEST_REMOVE_DISLIKE = """
             DELETE FROM "usability_reviews"
-            WHERE "user_id" = ? AND "review_id" = ? AND "usability_id" = 1;
+            WHERE "user_id" = ? AND "review_id" = ? AND "usability_id" = -1;
             """;
 
     @Override
@@ -113,7 +122,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                 review.getFilmId(),
                 review.getUserId(),
                 review.getContent(),
-                review.getFeedback().toString());
+                review.getIsPositive());
     }
 
     @Override
@@ -122,23 +131,24 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                 review.getFilmId(),
                 review.getUserId(),
                 review.getContent(),
-                review.getFeedback().toString(),
+                review.getIsPositive(),
                 review.getReviewId());
     }
 
     @Override
-    public boolean deleteReview(Integer id) {
+    public boolean deleteReview(Long id) {
         return delete(REQUEST_DELETE_REVIEW, id);
     }
 
     @Override
-    public Optional<Review> getReview(Integer id) {
+    public Optional<Review> getReview(Long id) {
         return findOne(REQUEST_GET_REVIEW, id);
     }
 
     @Override
     public List<Review> getReviewsForFilm(Long filmId, Integer count) {
-        return findMany(REQUEST_GET_ALL_REVIEWS_FOR_FILM, filmId, count);
+        List<Review> reviews = findMany(REQUEST_GET_ALL_REVIEWS_FOR_FILM, filmId, count);
+        return reviews;
     }
 
     @Override
@@ -147,23 +157,38 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
     }
 
     @Override
-    public void setLike(Integer reviewId, Integer userId) {
-        jdbc.update(REQUEST_SET_LIKE);
+    public void setLike(Long reviewId, Long userId) {
+        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(null);
+        if (state == null || state == 0) {
+            insert(REQUEST_SET_LIKE, userId, reviewId);
+            return;
+        }
+        if (state == -1) {
+            update(REQUEST_UPDATE_TO_LIKE, userId, reviewId);
+        }
     }
 
     @Override
-    public void setDislike(Integer reviewId, Integer userId) {
-        jdbc.update(REQUEST_SET_DISLIKE);
+    public void setDislike(Long reviewId, Long userId) {
+        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(null);
+        if (state == null) throw new RuntimeException("Review state is null.");
+        if (state == 0) {
+            insert(REQUEST_SET_DISLIKE, userId, reviewId);
+            return;
+        }
+        if (state == 1) {
+            update(REQUEST_UPDATE_TO_DISLIKE, userId, reviewId);
+        }
     }
 
     @Override
-    public void removeLike(Integer reviewId, Integer userId) {
-        jdbc.update(REQUEST_REMOVE_LIKE);
+    public void removeLike(Long reviewId, Long userId) {
+        update(REQUEST_REMOVE_LIKE, userId, reviewId);
     }
 
     @Override
-    public void removeDislike(Integer reviewId, Integer userId) {
-        jdbc.update(REQUEST_REMOVE_DISLIKE);
+    public void removeDislike(Long reviewId, Long userId) {
+        update(REQUEST_REMOVE_DISLIKE, userId, reviewId);
     }
 
 
