@@ -317,7 +317,7 @@ class FilmDbStorageTest {
         filmDbStorage.addLike(film3Id, user2Id);
 
 
-        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(10L));
+        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(10L, 0L, 0));
         assertNotNull(responseEntity);
         assertEquals(3, responseEntity.size());
         assertEquals(film2Id, responseEntity.get(0).getId());
@@ -349,7 +349,7 @@ class FilmDbStorageTest {
         filmDbStorage.addLike(film3Id, user2Id);
 
 
-        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(1L));
+        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(1L,0L, 0));
         assertNotNull(responseEntity);
         assertEquals(1, responseEntity.size());
         assertEquals(film2Id, responseEntity.get(0).getId());
