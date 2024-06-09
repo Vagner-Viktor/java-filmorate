@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
+import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -62,4 +63,15 @@ public class FilmController {
         return service.getPopular(count, genreId, year);
     }
 
+    @GetMapping("/search")
+    public Collection<Film> searchFilms(
+            @RequestParam(defaultValue = "", required = false) String query,
+            @RequestParam(defaultValue = "title", required = false) List<String> by) {
+        return service.searchFilms(query, by);
+    }
+
+    @GetMapping("/director/{id}")
+    public Collection<Film> getFilmsByDirector(@PathVariable Long id, @RequestParam String sortBy) {
+        return service.getFilmsByDirector(id, sortBy);
+    }
 }

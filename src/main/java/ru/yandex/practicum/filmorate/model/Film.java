@@ -46,6 +46,9 @@ public class Film {
     @Builder.Default
     private Collection<Genre> genres = new HashSet<>();
 
+    @Builder.Default
+    private Collection<Director> directors = new HashSet<>();
+
     @JsonProperty("duration")
     @Positive
     public long getDurationTimeSeconds() {
