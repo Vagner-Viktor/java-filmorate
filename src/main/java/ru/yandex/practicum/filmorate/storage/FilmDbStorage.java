@@ -207,13 +207,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             DELETE FROM "films"
             WHERE "film_id" = ?;
             """;
-
     private static final String FILMS_INSERT_FILMS_DIRECTORS_QUERY = """
             INSERT INTO "films_director" ("film_id", "director_id")
                 VALUES (?, ?);
             """;
-
-    private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_DATE = """ 
+    private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_DATE = """
             SELECT *
             FROM "films" AS f
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
@@ -222,7 +220,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             GROUP BY f."film_id"
             ORDER BY f."release_date";
             """;
-
     private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_LIKES = """
             SELECT
                 f."film_id" AS "film_id",

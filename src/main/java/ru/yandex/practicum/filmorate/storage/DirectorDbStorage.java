@@ -100,14 +100,8 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
     }
 
     public boolean checkDirectorExists(long id) {
-        String sqlQuery = """
-                SELECT *
-                FROM "directors"
-                WHERE "director_id" = ?
-                """;
-
         return findOne(
-                sqlQuery,
+                DIRECTOR_FIND_BY_ID_QUERY,
                 id).isPresent();
     }
 }
