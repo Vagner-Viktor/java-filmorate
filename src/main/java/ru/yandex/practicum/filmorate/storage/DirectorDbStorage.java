@@ -13,21 +13,42 @@ import java.util.Collection;
 @Component
 @Slf4j
 @Primary
-public class DirectorDbStorage extends BaseDbStorage<Director> implements DirectorStorage { // как поправишь вынеси константы
-
+public class DirectorDbStorage extends BaseDbStorage<Director> implements DirectorStorage {
     public DirectorDbStorage(JdbcTemplate jdbcTemplate, RowMapper<Director> mapper) {
         super(jdbcTemplate, mapper);
     }
 
+    private static final String DIRECTORS_FIND_ALL_QUERY = """
+            SELECT *
+            FROM "directors"
+            """;
+
+    private static final String DIRECTOR_FIND_BY_ID_QUERY = """
+            SELECT *
+            FROM "directors"
+            WHERE "director_id" = ?
+            """;
+
+    private static final String DIRECTORS_ADD_LIKE_QUERY = """
+            INSERT INTO "directors" ("name")
+            VALUES (?);
+            """;
+
+    private static final String DIRECTORS_UPDATE_LIKE_QUERY = """
+            UPDATE "directors"
+            SET "name" = ?
+            WHERE "director_id" = ?;
+            """;
+
+    private static final String DIRECTORS_DELETE_QUERY = """
+            DELETE FROM "directors"
+            WHERE "director_id" = ?
+            """;
+
     @Override
     public Collection<Director> getAllDirectors() {
         log.info("Получение списка режиссеров");
-        String sqlQuery = """
-                SELECT *
-                FROM "directors"
-                """;
-
-        return findMany(sqlQuery);
+        return findMany(DIRECTORS_FIND_ALL_QUERY);
     }
 
     @Override
@@ -36,24 +57,14 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
             throw new NotFoundException("Id режисера должен быть указан");
         }
         log.info("Получение режиссера по id = {}", id);
-        String sqlQuery = """
-                SELECT *
-                FROM "directors"
-                WHERE "director_id" = ?
-                """;
 
-        return findOne(sqlQuery, id)
+        return findOne(DIRECTOR_FIND_BY_ID_QUERY, id)
                 .orElseThrow(() -> new NotFoundException("Режиссер с id = " + id + " не найден!"));
     }
 
     @Override
     public Director addDirector(Director director) {
-        String sqlQuery = """
-                INSERT INTO "directors" ("name")
-                VALUES (?);
-                """;
-
-        Long id = insertGetKey(sqlQuery, director.getName());
+        Long id = insertGetKey(DIRECTORS_ADD_LIKE_QUERY, director.getName());
         director.setId(id);
 
         log.info("Режиссер {} добавлен в список с id = {}", director.getName(), director.getId());
@@ -63,18 +74,12 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
 
     @Override
     public Director updateDirector(Director director) {
-        String sqlQuery = """
-                UPDATE "directors"
-                SET "name" = ?
-                WHERE "director_id" = ?;
-                """;
-
         if (director.getId() == null) {
             throw new NotFoundException("Id режисера должен быть указан");
         }
 
         if (checkDirectorExists(director.getId())) {
-            update(sqlQuery, director.getName(), director.getId());
+            update(DIRECTORS_UPDATE_LIKE_QUERY, director.getName(), director.getId());
 
             log.info("Режиссер с id = {} обновлен", director.getId());
             return director;
@@ -85,27 +90,14 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
 
     @Override
     public Long deleteDirector(Long id) {
-        String sqlQuery = """
-                DELETE FROM "directors"
-                WHERE "director_id" = ?
-                """;
-
         if (checkDirectorExists(id)) {
-            delete(sqlQuery, id);
+            delete(DIRECTORS_DELETE_QUERY, id);
             log.info("Режиссер с id = {} удален", id);
             return id;
         } else {
             throw new NotFoundException("Режиссер с id = " + id + " не найден");
         }
     }
-
-//    public boolean checkDirectorExists(List<Director> directors) {
-//        for (Director director : directors) {
-//            if (!checkDirectorExists(director.getId()))
-//                throw new ValidationException("Директор с id = " + director.getId() + " не найден!");
-//        }
-//        return true;
-//    }
 
     public boolean checkDirectorExists(long id) {
         String sqlQuery = """

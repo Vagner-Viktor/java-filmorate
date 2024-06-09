@@ -69,6 +69,10 @@ public class FilmService {
         return SearchType.TITLE;
     }
 
+    public Collection<Film> getFilmsByDirector(Long id, String sortBy) {
+        return storage.getFilmsByDirector(id, sortBy);
+    }
+
     private void validate(Film film) {
         if (film.getReleaseDate().isBefore(LocalDate.of(1895, 1, 28))) {
             throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года!");

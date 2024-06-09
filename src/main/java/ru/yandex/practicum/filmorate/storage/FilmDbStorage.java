@@ -213,6 +213,35 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 VALUES (?, ?);
             """;
 
+    private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_DATE = """ 
+            SELECT *
+            FROM "films" AS f
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_director" AS fd ON f."film_id" = fd."film_id"
+            WHERE fd."director_id" = ?
+            GROUP BY f."film_id"
+            ORDER BY f."release_date";
+            """;
+
+    private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_LIKES = """
+            SELECT
+                f."film_id" AS "film_id",
+                f."name" AS name,
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+            COUNT(l."film_id") AS count
+            FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_director" AS fd ON f."film_id" = fd."film_id"
+            WHERE fd."director_id" = ?
+            GROUP BY l."film_id"
+            ORDER BY count DESC;
+            """;
+
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, FilmDirectorStorage filmDirectorStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
@@ -392,6 +421,28 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return findMany(
                 FILMS_GET_POPULAR_QUERY,
                 count);
+    }
+
+    @Override
+    public Collection<Film> getFilmsByDirector(Long id, String sortBy) { // получаем sorted film list по likes или date
+        log.info("Получение списка фильмов режиссера {} ", id);
+
+        String sqlQuery = "";
+
+        switch (sortBy) {
+            case "year" -> sqlQuery = GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_DATE;
+            case "likes" -> sqlQuery = GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_LIKES;
+            default -> throw new NotFoundException("Данный вид сортировки " + sortBy + " не найден");
+        }
+
+        Collection<Film> films = findMany(
+                sqlQuery, id);
+
+        setFilmsGenres(films);
+        setFilmsLikes(films);
+        setFilmsDirectors(films);
+
+        return films;
     }
 
     public boolean checkFilmExists(Long id) {
