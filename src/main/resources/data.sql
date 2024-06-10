@@ -14,6 +14,9 @@ MERGE INTO "mpas" VALUES (5, 'NC-17');
 MERGE INTO "friendship_status" VALUES (1, 'CONFIRMED');
 MERGE INTO "friendship_status" VALUES (2, 'UNCONFIRMED');
 
+MERGE INTO "usabilitys" VALUES (1, 'USEFUL', 1);
+MERGE INTO "usabilitys" VALUES (2, 'USELESS', -1);
+
 MERGE INTO "event_types" VALUES (1, 'LIKE');
 MERGE INTO "event_types" VALUES (2, 'REVIEW');
 MERGE INTO "event_types" VALUES (3, 'FRIEND');
