@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Review;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -147,8 +146,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public List<Review> getReviewsForFilm(Long filmId, Integer count) {
-        List<Review> reviews = findMany(REQUEST_GET_ALL_REVIEWS_FOR_FILM, filmId, count);
-        return reviews;
+        return findMany(REQUEST_GET_ALL_REVIEWS_FOR_FILM, filmId, count);
     }
 
     @Override

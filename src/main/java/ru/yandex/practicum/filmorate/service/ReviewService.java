@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.storage.ReviewStorage;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -48,21 +47,21 @@ public class ReviewService {
                 throw e;
             }
         }
-
     }
 
-    public Review deleteReview(Long id) {
-        Review review = getReview(id);
-        boolean haveBeedDeleted = reviewStorage.deleteReview(id);
-        if (!haveBeedDeleted && review != null) return review;
-        return null;
+    public boolean deleteReview(Long id) {
+        return reviewStorage.deleteReview(id);
     }
 
     public Review getReview(Long id) {
-        Optional<Review> reviewOptional = reviewStorage.getReview(id);
-        return reviewOptional.orElse(null);
+        try {
+            return reviewStorage.getReview(id).orElse(null);
+        } catch (Exception e) {
+            throw new NotFoundException("Review not found.");
+        }
     }
 
+    // НЕ РАБОТАЕТ !!!
     public List<Review> getReviews(Long filmId, Integer count) {
         if (count == null || count <= 0) count = 10;
         if (filmId != null) {

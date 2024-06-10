@@ -7,7 +7,6 @@ import java.util.Optional;
 
 public interface ReviewStorage {
 
-
     long createReview(Review review);
 
     void updateReview(Review review);

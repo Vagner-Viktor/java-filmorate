@@ -31,7 +31,7 @@ public class ReviewController {
 
     // DELETE /reviews/{id} Удаление уже имеющегося отзыва.
     @DeleteMapping("/{id}")
-    public Review deleteReview(@PathVariable Long id) {
+    public boolean deleteReview(@PathVariable Long id) {
         return reviewService.deleteReview(id);
     }
 
@@ -41,7 +41,8 @@ public class ReviewController {
         return reviewService.getReview(id);
     }
 
-    //GET /reviews?filmId={filmId}&count={count} Получение всех отзывов по идентификатору фильма, если фильм не указан то все. Если кол-во не указано то 10.
+    //GET /reviews?filmId={filmId}&count={count} Получение всех отзывов по идентификатору фильма,
+    // если фильм не указан то все. Если кол-во не указано, то 10.
     @GetMapping()
     public List<Review> getReviews(@RequestParam(required = false) Long filmId,
                                    @RequestParam(required = false) Integer count) {
