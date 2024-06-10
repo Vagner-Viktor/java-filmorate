@@ -46,7 +46,8 @@ public class ReviewController {
     @GetMapping()
     public List<Review> getReviews(@RequestParam(required = false) Long filmId,
                                    @RequestParam(required = false) Integer count) {
-        return reviewService.getReviews(filmId, count);
+        List<Review> reviews = reviewService.getReviews(filmId, count);
+        return reviews;
     }
 
     // PUT /reviews/{id}/like/{userId} — пользователь ставит лайк отзыву.

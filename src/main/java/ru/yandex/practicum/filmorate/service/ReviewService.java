@@ -49,19 +49,18 @@ public class ReviewService {
         }
     }
 
-    public boolean deleteReview(Long id) {
-        return reviewStorage.deleteReview(id);
+    public boolean deleteReview(Long reviewId) {
+        return reviewStorage.deleteReview(reviewId);
     }
 
-    public Review getReview(Long id) {
+    public Review getReview(Long reviewId) {
         try {
-            return reviewStorage.getReview(id).orElse(null);
+            return reviewStorage.getReview(reviewId).orElse(null);
         } catch (Exception e) {
             throw new NotFoundException("Review not found.");
         }
     }
 
-    // НЕ РАБОТАЕТ !!!
     public List<Review> getReviews(Long filmId, Integer count) {
         if (count == null || count <= 0) count = 10;
         if (filmId != null) {

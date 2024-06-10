@@ -64,33 +64,39 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
             LEFT JOIN "usability_reviews" AS ur ON r."review_id" = ur."review_id"
             LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
             WHERE r."film_id" = ?
+            GROUP BY r."review_id"
             ORDER BY r."review_id"
-            LIMIT ?
+            LIMIT ?;
             """;
 
     private static final String REQUEST_GET_ALL_REVIEWS_FOR_ALL_FILMS = """
-            SELECT
-                r."review_id" AS review_id,
-                r."film_id" AS film_id,
-                r."user_id" AS user_id,
-                r."content" AS content,
-                r."is_positive" AS is_positive,
-                SUM(u."weigh") AS evaluation
-            FROM "reviews" AS r
-            LEFT JOIN "usability_reviews" AS ur ON r."review_id" = ur."review_id"
+            WITH RankedReviews AS (
+                SELECT
+                    "review_id" AS review_id,
+                    "film_id" AS film_id,
+                    "user_id" AS user_id,
+                    "content" AS content,
+                    "is_positive" AS is_positive,
+                    ROW_NUMBER() OVER (PARTITION BY "film_id" ORDER BY "review_id") AS rn
+                FROM "reviews"
+            )
+            SELECT rr.*, SUM(u."weigh") AS useful
+            FROM RankedReviews AS rr
+            LEFT JOIN "usability_reviews" AS ur ON rr.review_id = ur."review_id"
             LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
-            ORDER BY r."review_id", r."film_id"
-            LIMIT ?
+            WHERE rn <= ? -- типо LIMIT
+            GROUP BY rr.review_id
+            ORDER BY rr.film_id, rn;
             """;
 
     private static final String REQUEST_SET_LIKE = """
             INSERT INTO "usability_reviews" ("user_id", "review_id", "usability_id")
-            VALUES (?, ?, 1)
+            VALUES (?, ?, 1);
             """;
 
     private static final String REQUEST_SET_DISLIKE = """
             INSERT INTO "usability_reviews" ("user_id", "review_id", "usability_id")
-            VALUES (?, ?, 2)
+            VALUES (?, ?, 2);
             """;
 
     private static final String REQUEST_UPDATE_TO_LIKE = """
@@ -151,7 +157,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public List<Review> getNReviewsForEachFilm(Integer count) {
-        return List.of();
+        return findMany(REQUEST_GET_ALL_REVIEWS_FOR_ALL_FILMS, count);
     }
 
     @Override
