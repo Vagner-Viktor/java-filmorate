@@ -53,7 +53,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             WHERE f."film_id" = ?;
             """;
     private static final String FILMS_ADD_LIKE_QUERY = """
-            INSERT INTO "likes" ("film_id" , "user_id")
+            MERGE INTO "likes" ("film_id" , "user_id")
                         VALUES (?, ?);
             """;
     private static final String FILMS_DELETE_LIKE_QUERY = """
@@ -145,7 +145,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             WHERE "film_id" = ?;
             """;
     private static final String FILMS_INSERT_FILMS_GENRE_QUERY = """
-            INSERT INTO "films_genre" ("film_id", "genre_id")
+            MERGE INTO "films_genre" ("film_id", "genre_id")
                 VALUES (?, ?);
             """;
     private static final String FILMS_SEARCH_BY_TITLE = """
@@ -184,6 +184,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             GROUP BY f."name", f."film_id"
             ORDER BY "film_id";
             """;
+    private static final String FILMS_DELETE_FILMS_DIRECTOR_QUERY = """
+            DELETE FROM "films_director"
+            WHERE "film_id" = ?;
+            """;
     private static final String FILMS_SEARCH_BY_TITLE_AND_DIRECTOR = """
             SELECT
                 f."film_id" AS "film_id",
@@ -209,7 +213,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             WHERE "film_id" = ?;
             """;
     private static final String FILMS_INSERT_FILMS_DIRECTORS_QUERY = """
-            INSERT INTO "films_director" ("film_id", "director_id")
+            MERGE INTO "films_director" ("film_id", "director_id")
                 VALUES (?, ?);
             """;
     private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_DATE = """
@@ -285,6 +289,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 film.getMpa().getId()
         );
         film.setId(id);
+        film.setGenres(film.getGenres().stream().distinct().collect(Collectors.toList()));
         for (Genre genre : film.getGenres()) {
             insert(
                     FILMS_INSERT_FILMS_GENRE_QUERY,
@@ -324,6 +329,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     FILMS_DELETE_FILMS_GENRE_QUERY,
                     film.getId()
             );
+            film.setGenres(film.getGenres().stream().distinct().collect(Collectors.toList()));
             for (Genre genre : film.getGenres()) {
                 insert(
                         FILMS_INSERT_FILMS_GENRE_QUERY,
@@ -331,6 +337,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                         genre.getId()
                 );
             }
+            delete(
+                    FILMS_DELETE_FILMS_DIRECTOR_QUERY,
+                    film.getId()
+            );
             for (Director director : film.getDirectors()) {
                 insert(
                         FILMS_INSERT_FILMS_DIRECTORS_QUERY,
@@ -486,6 +496,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 })
                 .collect(Collectors.joining(", "));
         Collection<FilmGenre> filmGenres = filmGenreStorage.findGenresOfFilms(filmsId);
+        System.out.println(filmGenres);
         for (Film film : films) {
             film.setGenres(filmGenres.stream()
                     .filter(filmGenre -> film.getId() == filmGenre.getFilmId())
