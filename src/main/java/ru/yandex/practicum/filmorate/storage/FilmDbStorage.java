@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.*;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashSet;
@@ -19,17 +20,23 @@ import java.util.stream.Collectors;
 @Component
 @Primary
 public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
+    private final UserStorage userStorage;
+    private final GenreStorage genreStorage;
+    private final MpaStorage mpaStorage;
+    private final FilmLikeStorage filmLikeStorage;
+    private final FilmGenreStorage filmGenreStorage;
+    private final UserFeedStorage userFeedStorage;
+    private final FilmDirectorStorage filmDirectorStorage;
+
     private static final String FILMS_FIND_ALL_QUERY = """
             SELECT *
             FROM "films" AS f
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id";
             """;
-
     private static final String FILMS_INSERT_QUERY = """
             INSERT INTO "films" ("name" , "description" , "release_date" , "duration", "mpa_id")
                         VALUES (?, ?, ?, ?, ?);
             """;
-
     private static final String FILMS_UPDATE_QUERY = """
             UPDATE "films"
             SET "name" = ?,
@@ -39,25 +46,21 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 "mpa_id" = ?
             WHERE "film_id" = ?;
             """;
-
     private static final String FILMS_FIND_BY_ID_QUERY = """
             SELECT *
             FROM "films" AS f
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
             WHERE f."film_id" = ?;
             """;
-
     private static final String FILMS_ADD_LIKE_QUERY = """
             INSERT INTO "likes" ("film_id" , "user_id")
                         VALUES (?, ?);
             """;
-
     private static final String FILMS_DELETE_LIKE_QUERY = """
             DELETE FROM "likes"
             WHERE "film_id" = ?
                 AND "user_id" = ?;
             """;
-
     private static final String FILMS_GET_POPULAR_QUERY = """
             SELECT
                 f."film_id" AS "film_id",
@@ -77,7 +80,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             ORDER BY count DESC
             LIMIT ?;
             """;
-
     private static final String FILMS_GET_POPULAR_QUERY_WITH_GENRE = """
             SELECT
                         f."film_id" AS "film_id",
@@ -98,7 +100,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     ORDER BY count DESC
                     LIMIT ?;
             """;
-
     private static final String FILMS_GET_POPULAR_QUERY_WITH_YEAR = """
             SELECT
                         f."film_id" AS "film_id",
@@ -119,7 +120,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     ORDER BY count DESC
                     LIMIT ?;
             """;
-
     private static final String FILMS_GET_POPULAR_QUERY_WITH_YEAR_AND_GENRE = """
             SELECT
                         f."film_id" AS "film_id",
@@ -140,17 +140,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     ORDER BY count DESC
                     LIMIT ?;
             """;
-
     private static final String FILMS_DELETE_FILMS_GENRE_QUERY = """
             DELETE FROM "films_genre"
             WHERE "film_id" = ?;
             """;
-
     private static final String FILMS_INSERT_FILMS_GENRE_QUERY = """
             INSERT INTO "films_genre" ("film_id", "genre_id")
                 VALUES (?, ?);
             """;
-
     private static final String FILMS_SEARCH_BY_TITLE = """
             SELECT
                 f."film_id" AS "film_id",
@@ -207,7 +204,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             GROUP BY f."name", f."film_id"
             ORDER BY "film_id";
             """;
-
     private static final String FILMS_DELETE = """
             DELETE FROM "films"
             WHERE "film_id" = ?;
@@ -216,7 +212,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             INSERT INTO "films_director" ("film_id", "director_id")
                 VALUES (?, ?);
             """;
-
     private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_DATE = """
             SELECT * FROM "films" AS f
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
@@ -225,7 +220,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             GROUP BY f."film_id"
             ORDER BY f."release_date";
             """;
-
     private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_LIKES = """
             SELECT
                 f."film_id" AS "film_id",
@@ -245,20 +239,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             ORDER BY count DESC;
             """;
 
-    private final UserStorage userStorage;
-    private final GenreStorage genreStorage;
-    private final MpaStorage mpaStorage;
-    private final FilmLikeStorage filmLikeStorage;
-    private final FilmGenreStorage filmGenreStorage;
-    private final FilmDirectorStorage filmDirectorStorage;
-
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, FilmDirectorStorage filmDirectorStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, UserFeedStorage userFeedStorage, FilmDirectorStorage filmDirectorStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
         this.genreStorage = genreStorage;
         this.mpaStorage = mpaStorage;
         this.filmLikeStorage = likeStorage;
         this.filmGenreStorage = filmGenreStorage;
+        this.userFeedStorage = userFeedStorage;
         this.filmDirectorStorage = filmDirectorStorage;
     }
 
@@ -381,6 +369,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 userId
         );
         film.addLike(userId);
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(userId)
+                .entityId(id)
+                .timestamp(Instant.now())
+                .eventType(EventType.LIKE.name())
+                .operation(OperationType.ADD.name())
+                .build());
         log.info("Пользователь с id = {} поставил лайк фильму id = {}", userId, id);
         return film;
     }
@@ -401,6 +397,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 userId
         );
         film.deleteLike(userId);
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(userId)
+                .entityId(id)
+                .timestamp(Instant.now())
+                .eventType(EventType.LIKE.name())
+                .operation(OperationType.REMOVE.name())
+                .build());
         log.info("Пользователь с id = {} удалил лайк фильму id = {}", userId, id);
         return film;
     }

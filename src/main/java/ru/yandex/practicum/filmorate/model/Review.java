@@ -13,20 +13,20 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Review {
 
-    public Long reviewId;
+    private Long reviewId;
 
     @NotNull(message = "Id фильма не может быть пустым.")
-    public Long filmId;
+    private Long filmId;
 
     @NotNull(message = "Id пользователя не может быть пустым.")
-    public Long userId;
+    private Long userId;
 
     @NotBlank(message = "Контент не может быть пустым.")
-    public String content;
+    private String content;
 
     @NotNull(message = "Отзыв не может быть пустым.")
-    public Boolean isPositive;
+    private Boolean isPositive;
 
-    public Integer useful;
+    private Integer useful;
 
 }

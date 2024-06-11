@@ -5,8 +5,12 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.EventType;
+import ru.yandex.practicum.filmorate.model.OperationType;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.UserFeed;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,27 +20,29 @@ import java.util.Optional;
 public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStorage {
 
     private final UsabilityStateStorage usabilityStateStorage;
+    private final UserFeedStorage userFeedStorage;
 
-    public ReviewDbStorage(JdbcTemplate jdbc, RowMapper<Review> mapper, UsabilityStateStorage usabilityStateStorage) {
+    public ReviewDbStorage(JdbcTemplate jdbc, RowMapper<Review> mapper, UsabilityStateStorage usabilityStateStorage, UserFeedStorage userFeedStorage) {
         super(jdbc, mapper);
         this.usabilityStateStorage = usabilityStateStorage;
+        this.userFeedStorage = userFeedStorage;
     }
 
     private static final String REQUEST_ADD_REVIEW = """
-                INSERT INTO "reviews" ("film_id", "user_id", "content", "is_positive")
-                VALUES (?, ?, ?, ?);
-                """;
+            INSERT INTO "reviews" ("film_id", "user_id", "content", "is_positive")
+            VALUES (?, ?, ?, ?);
+            """;
 
     private static final String REQUEST_UPDATE_REVIEW = """
-             UPDATE "reviews"
-             SET "film_id" = ?, "user_id" = ?, "content" = ?, "is_positive" = ?
-             WHERE "review_id" = ?;
-             """;
+            UPDATE "reviews"
+            SET "film_id" = ?, "user_id" = ?, "content" = ?, "is_positive" = ?
+            WHERE "review_id" = ?;
+            """;
 
     private static final String REQUEST_DELETE_REVIEW = """
-             DELETE FROM "reviews"
-             WHERE "review_id" = ?;
-             """;
+            DELETE FROM "reviews"
+            WHERE "review_id" = ?;
+            """;
 
     private static final String REQUEST_GET_REVIEW = """
             SELECT
@@ -124,15 +130,32 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public long createReview(Review review) {
-        return insertGetKey(REQUEST_ADD_REVIEW,
+        long id = insertGetKey(REQUEST_ADD_REVIEW,
                 review.getFilmId(),
                 review.getUserId(),
                 review.getContent(),
                 review.getIsPositive());
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(review.getUserId())
+                .entityId(id)
+                .timestamp(Instant.now())
+                .eventType(EventType.REVIEW.name())
+                .operation(OperationType.ADD.name())
+                .build());
+        return id;
     }
 
     @Override
     public void updateReview(Review review) {
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(review.getUserId())
+                .entityId(review.getReviewId())
+                .timestamp(Instant.now())
+                .eventType(EventType.REVIEW.name())
+                .operation(OperationType.UPDATE.name())
+                .build());
         update(REQUEST_UPDATE_REVIEW,
                 review.getFilmId(),
                 review.getUserId(),
@@ -143,6 +166,15 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public boolean deleteReview(Long id) {
+        Review review = findOne(REQUEST_GET_REVIEW, id).orElse(null);
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(review.getUserId())
+                .entityId(review.getReviewId())
+                .timestamp(Instant.now())
+                .eventType(EventType.REVIEW.name())
+                .operation(OperationType.REMOVE.name())
+                .build());
         return delete(REQUEST_DELETE_REVIEW, id);
     }
 
@@ -166,11 +198,17 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
         Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(null);
         if (state == null || state == 0) {
             insert(REQUEST_SET_LIKE, userId, reviewId);
-            return;
-        }
-        if (state == -1) {
+        } else if (state == -1) {
             update(REQUEST_UPDATE_TO_LIKE, userId, reviewId);
         }
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(userId)
+                .entityId(reviewId)
+                .timestamp(Instant.now())
+                .eventType(EventType.LIKE.name())
+                .operation(OperationType.ADD.name())
+                .build());
     }
 
     @Override
@@ -179,21 +217,43 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
         if (state == null) throw new RuntimeException("Review state is null.");
         if (state == 0) {
             insert(REQUEST_SET_DISLIKE, userId, reviewId);
-            return;
-        }
-        if (state == 1) {
+        } else if (state == 1) {
             update(REQUEST_UPDATE_TO_DISLIKE, userId, reviewId);
         }
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(userId)
+                .entityId(reviewId)
+                .timestamp(Instant.now())
+                .eventType(EventType.REVIEW.name())
+                .operation(OperationType.UPDATE.name())
+                .build());
     }
 
     @Override
     public void removeLike(Long reviewId, Long userId) {
         update(REQUEST_REMOVE_LIKE, userId, reviewId);
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(userId)
+                .entityId(reviewId)
+                .timestamp(Instant.now())
+                .eventType(EventType.REVIEW.name())
+                .operation(OperationType.REMOVE.name())
+                .build());
     }
 
     @Override
     public void removeDislike(Long reviewId, Long userId) {
         update(REQUEST_REMOVE_DISLIKE, userId, reviewId);
+        userFeedStorage.create(UserFeed.builder()
+                .eventId(null)
+                .userId(userId)
+                .entityId(reviewId)
+                .timestamp(Instant.now())
+                .eventType(EventType.REVIEW.name())
+                .operation(OperationType.REMOVE.name())
+                .build());
     }
 
     @Override

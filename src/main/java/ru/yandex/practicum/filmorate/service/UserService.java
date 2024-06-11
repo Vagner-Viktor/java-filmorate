@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.UserFeed;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
@@ -47,5 +48,9 @@ public class UserService {
 
     public Collection<User> findCommonFriends(Long id, Long otherId) {
         return storage.findCommonFriends(id, otherId);
+    }
+
+    public Collection<UserFeed> findUserFeeds(Long id) {
+        return storage.findUserFeeds(id);
     }
 }

@@ -37,7 +37,10 @@ import static org.junit.jupiter.api.Assertions.*;
         FilmLikeDbStorage.class,
         FriendDbStorage.class,
         FilmGenreDBStorage.class,
-        FilmDirectorDBStorage.class})
+        FilmDirectorDBStorage.class,
+        UserFeedDBStorage.class,
+        ReviewDbStorage.class,
+        UsabilityStateDbStorage.class})
 @ComponentScan(basePackages = {"ru.yandex.practicum.filmorate.storage.mapper"})
 class FilmDbStorageTest {
     private final FilmDbStorage filmDbStorage;
@@ -350,7 +353,7 @@ class FilmDbStorageTest {
         filmDbStorage.addLike(film3Id, user2Id);
 
 
-        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(1L,0L, 0));
+        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(1L, 0L, 0));
         assertNotNull(responseEntity);
         assertEquals(1, responseEntity.size());
         assertEquals(film2Id, responseEntity.get(0).getId());

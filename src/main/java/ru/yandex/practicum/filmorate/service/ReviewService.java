@@ -39,9 +39,6 @@ public class ReviewService {
         if (!filmStorage.checkFilmExists(review.getFilmId()))
             throw new NotFoundException(NOT_FOUND_FILM_MESSAGE);
         reviewStorage.updateReview(review);
-            /*
-                реализован второй запрос так как есть поле useful, которое зависит от состояния другой таблицы
-            */
         return getReview(review.getReviewId());
     }
 
