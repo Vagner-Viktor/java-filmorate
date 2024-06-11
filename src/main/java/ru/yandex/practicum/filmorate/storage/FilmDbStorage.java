@@ -10,11 +10,13 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.*;
 
+import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -287,7 +289,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 FILMS_INSERT_QUERY,
                 film.getName(),
                 film.getDescription(),
-                java.sql.Date.valueOf(film.getReleaseDate()),
+                Date.valueOf(film.getReleaseDate()),
                 film.getDuration(),
                 film.getMpa().getId()
         );
@@ -326,7 +328,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     FILMS_UPDATE_QUERY,
                     film.getName(),
                     film.getDescription(),
-                    java.sql.Date.valueOf(film.getReleaseDate()),
+                    Date.valueOf(film.getReleaseDate()),
                     film.getDuration(),
                     film.getMpa().getId(),
                     film.getId()
@@ -432,28 +434,35 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     public Collection<Film> getPopular(Long count, Long genreId, int year) {
         if (count <= 0) throw new ValidationException("Параметр count должен быть больше 0");
         log.info("Получение списка {} популярных фильмов", count);
+        Collection<Film> films = null;
+
         //если ищем по count и year
         if (genreId == 0L && year >= 1) {
-            return findMany(
+            films = findMany(
                     FILMS_GET_POPULAR_QUERY_WITH_YEAR,
                     year, count);
         }
         //если ищем по count и genre
         if (genreId >= 1L && year == 0) {
-            return findMany(
+            films = findMany(
                     FILMS_GET_POPULAR_QUERY_WITH_GENRE,
                     genreId, count);
         }
         //если ищем по count, genre и year
         if (genreId >= 1L && year >= 1) {
-            return findMany(
+            films = findMany(
                     FILMS_GET_POPULAR_QUERY_WITH_YEAR_AND_GENRE,
                     year, genreId, count);
         }
         //только count
-        return findMany(
+        if (films == null) {
+        films = findMany(
                 FILMS_GET_POPULAR_QUERY,
-                count);
+                count);}
+        setFilmsGenres(films);
+        setFilmsLikes(films);
+        setFilmsDirectors(films);
+        return films;
     }
 
     @Override

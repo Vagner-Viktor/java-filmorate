@@ -247,6 +247,8 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public Collection<UserFeed> findUserFeeds(Long id) {
+        if (!checkUserExists(id))
+            throw new NotFoundException("Пользователь с id = " + id + " не найден");
         return userFeedStorage.findUserFeeds(id);
     }
 
