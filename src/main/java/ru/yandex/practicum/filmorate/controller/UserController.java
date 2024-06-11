@@ -21,6 +21,11 @@ public class UserController {
         return service.findAll();
     }
 
+    @GetMapping("/{id}")
+    public User findById(@PathVariable Long id) {
+        return service.findById(id);
+    }
+
     @PostMapping
     public User create(@Valid @RequestBody User user) {
         return service.create(user);
@@ -29,6 +34,11 @@ public class UserController {
     @PutMapping
     public User update(@Valid @RequestBody User newUser) {
         return service.update(newUser);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        service.delete(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
