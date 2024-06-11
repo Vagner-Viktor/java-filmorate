@@ -198,17 +198,25 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
         Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(null);
         if (state == null || state == 0) {
             insert(REQUEST_SET_LIKE, userId, reviewId);
+            userFeedStorage.create(UserFeed.builder()
+                    .eventId(null)
+                    .userId(userId)
+                    .entityId(reviewId)
+                    .timestamp(Instant.now())
+                    .eventType(EventType.LIKE.name())
+                    .operation(OperationType.ADD.name())
+                    .build());
         } else if (state == -1) {
             update(REQUEST_UPDATE_TO_LIKE, userId, reviewId);
+            userFeedStorage.create(UserFeed.builder()
+                    .eventId(null)
+                    .userId(userId)
+                    .entityId(reviewId)
+                    .timestamp(Instant.now())
+                    .eventType(EventType.LIKE.name())
+                    .operation(OperationType.UPDATE.name())
+                    .build());
         }
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(userId)
-                .entityId(reviewId)
-                .timestamp(Instant.now())
-                .eventType(EventType.LIKE.name())
-                .operation(OperationType.ADD.name())
-                .build());
     }
 
     @Override

@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.model.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private final FilmGenreStorage filmGenreStorage;
     private final UserFeedStorage userFeedStorage;
     private final FilmDirectorStorage filmDirectorStorage;
+    private final DirectorDbStorage directorDbStorage;
 
     private static final String FILMS_FIND_ALL_QUERY = """
             SELECT *
@@ -206,7 +208,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             WHERE LOWER(d."name") LIKE LOWER('%' || ? || '%')
                 OR LOWER(f."name") LIKE LOWER('%' || ? || '%')
             GROUP BY f."name", f."film_id"
-            ORDER BY "film_id";
+            ORDER BY "film_id" DESC;
             """;
     private static final String FILMS_DELETE = """
             DELETE FROM "films"
@@ -243,7 +245,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             ORDER BY count DESC;
             """;
 
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, UserFeedStorage userFeedStorage, FilmDirectorStorage filmDirectorStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, UserFeedStorage userFeedStorage, FilmDirectorStorage filmDirectorStorage, DirectorDbStorage directorDbStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
         this.genreStorage = genreStorage;
@@ -252,6 +254,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         this.filmGenreStorage = filmGenreStorage;
         this.userFeedStorage = userFeedStorage;
         this.filmDirectorStorage = filmDirectorStorage;
+        this.directorDbStorage = directorDbStorage;
     }
 
     @Override
@@ -289,7 +292,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 film.getMpa().getId()
         );
         film.setId(id);
-        film.setGenres(film.getGenres().stream().distinct().collect(Collectors.toList()));
+        film.setGenres(film.getGenres().stream()
+                .distinct()
+                .sorted(Comparator.comparingInt(Genre::getId))
+                .collect(Collectors.toList()));
         for (Genre genre : film.getGenres()) {
             insert(
                     FILMS_INSERT_FILMS_GENRE_QUERY,
@@ -329,7 +335,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     FILMS_DELETE_FILMS_GENRE_QUERY,
                     film.getId()
             );
-            film.setGenres(film.getGenres().stream().distinct().collect(Collectors.toList()));
+            film.setGenres(film.getGenres().stream()
+                    .distinct()
+                    .sorted(Comparator.comparingInt(Genre::getId))
+                    .collect(Collectors.toList()));
             for (Genre genre : film.getGenres()) {
                 insert(
                         FILMS_INSERT_FILMS_GENRE_QUERY,
@@ -449,6 +458,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public Collection<Film> getFilmsByDirector(Long id, String sortBy) { // получаем sorted film list по likes или date
+        if (!directorDbStorage.checkDirectorExists(id))
+            throw new NotFoundException("Режисер с id = " + id + " не найден");
         log.info("Получение списка фильмов режиссера {} ", id);
 
         String sqlQuery = "";
@@ -496,7 +507,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 })
                 .collect(Collectors.joining(", "));
         Collection<FilmGenre> filmGenres = filmGenreStorage.findGenresOfFilms(filmsId);
-        System.out.println(filmGenres);
         for (Film film : films) {
             film.setGenres(filmGenres.stream()
                     .filter(filmGenre -> film.getId() == filmGenre.getFilmId())
