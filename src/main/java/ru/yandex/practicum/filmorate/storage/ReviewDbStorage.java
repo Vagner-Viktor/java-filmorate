@@ -49,7 +49,8 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
             FROM "reviews" AS r
             LEFT JOIN "usability_reviews" AS ur ON r."review_id" = ur."review_id"
             LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
-            WHERE r."review_id" = ?;
+            WHERE r."review_id" = ?
+            GROUP BY r."review_id";
             """;
 
     private static final String REQUEST_GET_ALL_REVIEWS_FOR_FILM = """
@@ -193,6 +194,11 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
     @Override
     public void removeDislike(Long reviewId, Long userId) {
         update(REQUEST_REMOVE_DISLIKE, userId, reviewId);
+    }
+
+    @Override
+    public boolean checkReviewExists(Long id) {
+        return getReview(id).isPresent();
     }
 
 
