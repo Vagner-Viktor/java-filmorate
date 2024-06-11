@@ -1,26 +1,26 @@
-MERGE INTO "genres" VALUES (1, 'Комедия');
-MERGE INTO "genres" VALUES (2, 'Драма');
-MERGE INTO "genres" VALUES (3, 'Мультфильм');
-MERGE INTO "genres" VALUES (4, 'Триллер');
-MERGE INTO "genres" VALUES (5, 'Документальный');
-MERGE INTO "genres" VALUES (6, 'Боевик');
+merge into "genres" VALUES (1, 'Комедия');
+merge into "genres" VALUES (2, 'Драма');
+merge into "genres" VALUES (3, 'Мультфильм');
+merge into "genres" VALUES (4, 'Триллер');
+merge into "genres" VALUES (5, 'Документальный');
+merge into "genres" VALUES (6, 'Боевик');
 
-MERGE INTO "mpas" VALUES (1, 'G');
-MERGE INTO "mpas" VALUES (2, 'PG');
-MERGE INTO "mpas" VALUES (3, 'PG-13');
-MERGE INTO "mpas" VALUES (4, 'R');
-MERGE INTO "mpas" VALUES (5, 'NC-17');
+merge into "mpas" VALUES (1, 'G');
+merge into "mpas" VALUES (2, 'PG');
+merge into "mpas" VALUES (3, 'PG-13');
+merge into "mpas" VALUES (4, 'R');
+merge into "mpas" VALUES (5, 'NC-17');
 
-MERGE INTO "friendship_status" VALUES (1, 'CONFIRMED');
-MERGE INTO "friendship_status" VALUES (2, 'UNCONFIRMED');
+merge into "friendship_status" VALUES (1, 'CONFIRMED');
+merge into "friendship_status" VALUES (2, 'UNCONFIRMED');
 
-MERGE INTO "usabilitys" VALUES (1, 'USEFUL', 1);
-MERGE INTO "usabilitys" VALUES (2, 'USELESS', -1);
+merge into "usabilitys" VALUES (1, 'USEFUL', 1);
+merge into "usabilitys" VALUES (2, 'USELESS', -1);
 
-MERGE INTO "event_types" VALUES (1, 'LIKE');
-MERGE INTO "event_types" VALUES (2, 'REVIEW');
-MERGE INTO "event_types" VALUES (3, 'FRIEND');
+merge into "event_types" VALUES (1, 'LIKE');
+merge into "event_types" VALUES (2, 'REVIEW');
+merge into "event_types" VALUES (3, 'FRIEND');
 
-MERGE INTO "operation_types" VALUES (1, 'REMOVE');
-MERGE INTO "operation_types" VALUES (2, 'ADD');
-MERGE INTO "operation_types" VALUES (3, 'UPDATE');
+merge into "operation_types" VALUES (1, 'REMOVE');
+merge into "operation_types" VALUES (2, 'ADD');
+merge into "operation_types" VALUES (3, 'UPDATE');

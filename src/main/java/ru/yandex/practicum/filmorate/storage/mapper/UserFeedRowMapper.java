@@ -14,7 +14,7 @@ public class UserFeedRowMapper implements RowMapper<UserFeed> {
     public UserFeed mapRow(ResultSet rs, int rowNum) throws SQLException {
         UserFeed userFeed = new UserFeed();
         userFeed.setEventId(rs.getLong("user_event_id"));
-        userFeed.setTimestamp(Instant.ofEpochSecond(rs.getLong("timestamp")));
+        userFeed.setTimestamp(Instant.ofEpochMilli(rs.getLong("timestamp")));
         userFeed.setUserId(rs.getLong("user_id"));
         userFeed.setEntityId(rs.getLong("entity_id"));
         userFeed.setEventType(rs.getString("event_type_name"));

@@ -45,7 +45,7 @@ public class ReviewController {
     // если фильм не указан то все. Если кол-во не указано, то 10.
     @GetMapping()
     public List<Review> getReviews(@RequestParam(required = false) Long filmId,
-                                   @RequestParam(required = false) Integer count) {
+                                   @RequestParam(defaultValue = "10", required = false) Integer count) {
         return reviewService.getReviews(filmId, count);
     }
 
@@ -73,7 +73,7 @@ public class ReviewController {
     // DELETE /reviews/{id}/dislike/{userId} — пользователь удаляет дизлайк отзыву.
     @DeleteMapping("/{id}/dislike/{userId}")
     public Review deleteDislike(@PathVariable Long id,
-                             @PathVariable Long userId) {
+                                @PathVariable Long userId) {
         return reviewService.deleteDislike(id, userId);
     }
 

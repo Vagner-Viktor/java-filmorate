@@ -6,7 +6,7 @@ public enum OperationType {
     UPDATE(3);
     private final int value;
 
-    private OperationType(int value) {
+    OperationType(int value) {
         this.value = value;
     }
 

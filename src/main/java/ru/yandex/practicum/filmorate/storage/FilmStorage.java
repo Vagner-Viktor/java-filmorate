@@ -20,11 +20,11 @@ public interface FilmStorage {
 
     Film deleteLike(Long id, Long userId);
 
+    boolean checkFilmExists(Long id);
+
     Collection<Film> searchFilms(String query, SearchType searchType);
 
     Collection<Film> getPopular(Long count, Long genreId, int year);
 
     Collection<Film> getFilmsByDirector(Long id, String sortBy);
-
-    boolean checkFilmExists(Long id);
 }

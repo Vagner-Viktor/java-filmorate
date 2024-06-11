@@ -38,7 +38,7 @@ public class UserFeedDBStorage extends BaseDbStorage<UserFeed> implements UserFe
     @Override
     public UserFeed create(UserFeed userFeed) {
         Long id = insertGetKey(USER_FEEDS_INSERT_QUERY,
-                userFeed.getTimestamp().getEpochSecond(),
+                userFeed.getTimestamp().toEpochMilli(),
                 userFeed.getUserId(),
                 userFeed.getEntityId(),
                 EventType.valueOf(userFeed.getEventType()).getValue(),

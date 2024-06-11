@@ -6,7 +6,7 @@ public enum EventType {
     FRIEND(3);
     private final int value;
 
-    private EventType(int value) {
+    EventType(int value) {
         this.value = value;
     }
 

@@ -177,12 +177,12 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         );
         user.addFriend(new Friend(friendId, USERS_FRIENDSHIP_STATUS_UNCONFIRMED));
         userFeedStorage.create(UserFeed.builder()
-                        .eventId(null)
-                        .userId(id)
-                        .entityId(friendId)
-                        .timestamp(Instant.now())
-                        .eventType(EventType.FRIEND.name())
-                        .operation(OperationType.ADD.name())
+                .eventId(null)
+                .userId(id)
+                .entityId(friendId)
+                .timestamp(Instant.now())
+                .eventType(EventType.FRIEND.name())
+                .operation(OperationType.ADD.name())
                 .build());
         log.info("Пользователь с id = {} и пользователь с id = {} теперь друзья", friendId, id);
         return user;
