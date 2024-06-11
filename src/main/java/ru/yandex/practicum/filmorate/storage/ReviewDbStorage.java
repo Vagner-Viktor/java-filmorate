@@ -13,7 +13,7 @@ import java.util.Optional;
 @Slf4j
 @Component
 @Primary
-public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStorage{
+public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStorage {
 
     private final UsabilityStateStorage usabilityStateStorage;
 

@@ -17,7 +17,6 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
-    
     private static final String NOT_FOUND_REVIEW_MESSAGE = "Ревью с таким id не существует.";
     private static final String NOT_FOUND_USER_MESSAGE = "Пользователь с таким id не существует.";
     private static final String NOT_FOUND_FILM_MESSAGE = "Фильм с таким id не существует.";
@@ -27,7 +26,6 @@ public class ReviewService {
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
         if (!filmStorage.checkFilmExists(review.getFilmId()))
             throw new NotFoundException(NOT_FOUND_FILM_MESSAGE);
-
         long id = reviewStorage.createReview(review);
         review.setReviewId(id);
         return review;
@@ -40,7 +38,6 @@ public class ReviewService {
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
         if (!filmStorage.checkFilmExists(review.getFilmId()))
             throw new NotFoundException(NOT_FOUND_FILM_MESSAGE);
-
         reviewStorage.updateReview(review);
             /*
                 реализован второй запрос так как есть поле useful, которое зависит от состояния другой таблицы
@@ -51,14 +48,12 @@ public class ReviewService {
     public boolean deleteReview(Long reviewId) {
         if (!reviewStorage.checkReviewExists(reviewId))
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
-
         return reviewStorage.deleteReview(reviewId);
     }
 
     public Review getReview(Long reviewId) {
         if (!reviewStorage.checkReviewExists(reviewId))
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
-
         return reviewStorage.getReview(reviewId).orElse(null);
     }
 
@@ -67,7 +62,6 @@ public class ReviewService {
         if (filmId != null) {
             if (!filmStorage.checkFilmExists(filmId))
                 throw new NotFoundException(NOT_FOUND_FILM_MESSAGE);
-
             return reviewStorage.getReviewsForFilm(filmId, count);
         }
         return reviewStorage.getNReviewsForEachFilm(count);
@@ -78,7 +72,6 @@ public class ReviewService {
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         if (!userStorage.checkUserExists(userId))
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
-
         reviewStorage.setLike(reviewId, userId);
         return getReview(reviewId);
     }
@@ -88,7 +81,6 @@ public class ReviewService {
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         if (!userStorage.checkUserExists(userId))
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
-
         reviewStorage.setDislike(reviewId, userId);
         return getReview(reviewId);
     }
@@ -98,7 +90,6 @@ public class ReviewService {
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         if (!userStorage.checkUserExists(userId))
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
-
         reviewStorage.removeLike(reviewId, userId);
         return getReview(reviewId);
     }
@@ -108,7 +99,6 @@ public class ReviewService {
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         if (!userStorage.checkUserExists(userId))
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
-
         reviewStorage.removeDislike(reviewId, userId);
         return getReview(reviewId);
     }
