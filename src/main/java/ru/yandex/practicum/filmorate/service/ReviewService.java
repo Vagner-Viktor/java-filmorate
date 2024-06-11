@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
@@ -18,12 +17,16 @@ public class ReviewService {
     private final ReviewStorage reviewStorage;
     private final UserStorage userStorage;
     private final FilmStorage filmStorage;
+    
+    private static final String NOT_FOUND_REVIEW_MESSAGE = "Ревью с таким id не существует.";
+    private static final String NOT_FOUND_USER_MESSAGE = "Пользователь с таким id не существует.";
+    private static final String NOT_FOUND_FILM_MESSAGE = "Фильм с таким id не существует.";
 
     public Review createReview(Review review) {
         if (!userStorage.checkUserExists(review.getUserId()))
-            throw new NotFoundException("Пользователь с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
         if (!filmStorage.checkFilmExists(review.getFilmId()))
-            throw new NotFoundException("Фильм с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_FILM_MESSAGE);
 
         long id = reviewStorage.createReview(review);
         review.setReviewId(id);
@@ -32,11 +35,11 @@ public class ReviewService {
 
     public Review updateReview(Review review) {
         if (!reviewStorage.checkReviewExists(review.getReviewId()))
-            throw new NotFoundException("Ревью с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         if (!userStorage.checkUserExists(review.getUserId()))
-            throw new NotFoundException("Пользователь с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
         if (!filmStorage.checkFilmExists(review.getFilmId()))
-            throw new NotFoundException("Фильм с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_FILM_MESSAGE);
 
         reviewStorage.updateReview(review);
             /*
@@ -47,14 +50,14 @@ public class ReviewService {
 
     public boolean deleteReview(Long reviewId) {
         if (!reviewStorage.checkReviewExists(reviewId))
-            throw new NotFoundException("Ревью с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
 
         return reviewStorage.deleteReview(reviewId);
     }
 
     public Review getReview(Long reviewId) {
         if (!reviewStorage.checkReviewExists(reviewId))
-            throw new NotFoundException("Ревью с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
 
         return reviewStorage.getReview(reviewId).orElse(null);
     }
@@ -63,7 +66,7 @@ public class ReviewService {
         if (count == null || count <= 0) count = 10;
         if (filmId != null) {
             if (!filmStorage.checkFilmExists(filmId))
-                throw new NotFoundException("Фильм с таким id не существует.");
+                throw new NotFoundException(NOT_FOUND_FILM_MESSAGE);
 
             return reviewStorage.getReviewsForFilm(filmId, count);
         }
@@ -72,9 +75,9 @@ public class ReviewService {
 
     public Review likeReview(Long reviewId, Long userId) {
         if (!reviewStorage.checkReviewExists(reviewId))
-            throw new NotFoundException("Ревью с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         if (!userStorage.checkUserExists(userId))
-            throw new NotFoundException("Пользователь с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
 
         reviewStorage.setLike(reviewId, userId);
         return getReview(reviewId);
@@ -82,9 +85,9 @@ public class ReviewService {
 
     public Review dislikeReview(Long reviewId, Long userId) {
         if (!reviewStorage.checkReviewExists(reviewId))
-            throw new NotFoundException("Ревью с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         if (!userStorage.checkUserExists(userId))
-            throw new NotFoundException("Пользователь с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
 
         reviewStorage.setDislike(reviewId, userId);
         return getReview(reviewId);
@@ -92,9 +95,9 @@ public class ReviewService {
 
     public Review deleteLike(Long reviewId, Long userId) {
         if (!reviewStorage.checkReviewExists(reviewId))
-            throw new NotFoundException("Ревью с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         if (!userStorage.checkUserExists(userId))
-            throw new NotFoundException("Пользователь с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
 
         reviewStorage.removeLike(reviewId, userId);
         return getReview(reviewId);
@@ -102,9 +105,9 @@ public class ReviewService {
 
     public Review deleteDislike(Long reviewId, Long userId) {
         if (!reviewStorage.checkReviewExists(reviewId))
-            throw new NotFoundException("Ревью с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         if (!userStorage.checkUserExists(userId))
-            throw new NotFoundException("Пользователь с таким id не существует.");
+            throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
 
         reviewStorage.removeDislike(reviewId, userId);
         return getReview(reviewId);
