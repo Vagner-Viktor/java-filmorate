@@ -466,6 +466,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         return films;
     }
 
+    @Override
     public boolean checkFilmExists(Long id) {
         return findOne(
                 FILMS_FIND_BY_ID_QUERY,

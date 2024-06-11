@@ -15,18 +15,16 @@ public class Review {
 
     public Long reviewId;
 
-    //@Positive(message = "Film id cannot be negative.")
-    @NotNull(message = "Film id cannot be null.")
+    @NotNull(message = "Id фильма не может быть пустым.")
     public Long filmId;
 
-    //@Positive(message = "User id cannot be negative.")
-    @NotNull(message = "User id cannot be blank.")
+    @NotNull(message = "Id пользователя не может быть пустым.")
     public Long userId;
 
-    @NotBlank(message = "Content cannot be blank.")
+    @NotBlank(message = "Контент не может быть пустым.")
     public String content;
 
-    @NotNull(message = "Positive cannot be blank.")
+    @NotNull(message = "Отзыв не может быть пустым.")
     public Boolean isPositive;
 
     public Integer useful;
