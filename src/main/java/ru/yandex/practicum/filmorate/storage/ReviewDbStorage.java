@@ -87,13 +87,13 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                     ROW_NUMBER() OVER (PARTITION BY "film_id" ORDER BY "review_id") AS rn
                 FROM "reviews"
             )
-            SELECT rr.*, SUM(u."weigh") AS useful
+            SELECT rr.*, COALESCE(SUM(u."weigh"), 0) AS useful
             FROM RankedReviews AS rr
             LEFT JOIN "usability_reviews" AS ur ON rr.review_id = ur."review_id"
             LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
             WHERE rn <= ? -- типо LIMIT
             GROUP BY rr.review_id
-            ORDER BY rr.film_id, rn;
+            ORDER BY useful DESC, rr.film_id, rn;
             """;
 
     private static final String REQUEST_SET_LIKE = """
