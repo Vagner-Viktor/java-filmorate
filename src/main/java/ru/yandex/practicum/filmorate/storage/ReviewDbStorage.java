@@ -193,8 +193,8 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public void setLike(Long reviewId, Long userId) {
-        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(null);
-        if (state == null || state == 0) {
+        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(0);
+        if (state == 0) {
             insert(REQUEST_SET_LIKE, userId, reviewId);
             userFeedStorage.create(UserFeed.builder()
                     .eventId(null)
@@ -219,8 +219,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public void setDislike(Long reviewId, Long userId) {
-        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(null);
-        if (state == null) throw new RuntimeException("Review state is null.");
+        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(0);
         if (state == 0) {
             insert(REQUEST_SET_DISLIKE, userId, reviewId);
         } else if (state == 1) {
