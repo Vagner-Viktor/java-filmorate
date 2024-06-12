@@ -237,13 +237,13 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-            COUNT(l."film_id") AS count
+                COUNT(l."film_id") AS count
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
             LEFT JOIN "films_director" AS fd ON f."film_id" = fd."film_id"
             WHERE fd."director_id" = ?
-            GROUP BY l."film_id"
+            GROUP BY f."film_id"
             ORDER BY count DESC;
             """;
 
