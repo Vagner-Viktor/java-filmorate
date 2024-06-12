@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
@@ -73,5 +74,11 @@ public class FilmController {
     @GetMapping("/director/{id}")
     public Collection<Film> getFilmsByDirector(@PathVariable Long id, @RequestParam String sortBy) {
         return service.getFilmsByDirector(id, sortBy);
+    }
+
+    @GetMapping("/common")
+    public Collection<Film> getCommonFilms(@RequestParam Long userId,
+                                           @RequestParam Long friendId) throws BadRequestException {
+        return service.getCommonFilms(userId, friendId);
     }
 }

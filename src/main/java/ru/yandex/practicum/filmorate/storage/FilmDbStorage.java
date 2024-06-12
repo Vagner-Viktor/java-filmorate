@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -267,6 +268,19 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
              LIMIT 1;
             """;
 
+    private static final String GET_COMMON_FILMS = """
+            SELECT *
+            FROM "films" AS f
+            LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
+            WHERE "film_id" IN (
+                SELECT l1."film_id"
+                FROM "likes" AS l1
+                LEFT JOIN "likes" AS l2 ON l1."film_id" = l2."film_id"
+                WHERE l1."user_id" = ? AND l2."user_id" = ?
+            )
+            ORDER BY "film_id"
+            """;
+
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, UserFeedStorage userFeedStorage, FilmDirectorStorage filmDirectorStorage, DirectorDbStorage directorDbStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
@@ -516,6 +530,13 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         setFilmsGenres(films);
         setFilmsLikes(films);
         setFilmsDirectors(films);
+        return films;
+    }
+
+    @Override
+    public Collection<Film> getCommonFilms(Long userId, Long friendId) {
+        List<Film> films = findMany(GET_COMMON_FILMS, userId, friendId);
+        setFilmsGenres(films);
         return films;
     }
 
