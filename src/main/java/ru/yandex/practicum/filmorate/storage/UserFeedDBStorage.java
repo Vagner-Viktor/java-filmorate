@@ -24,7 +24,8 @@ public class UserFeedDBStorage extends BaseDbStorage<UserFeed> implements UserFe
             FROM "user_events" AS ue
             LEFT JOIN "event_types" AS et ON et."event_type_id" = ue."event_type_id"
             LEFT JOIN "operation_types" AS ot ON  ot."operation_type_id" = ue."operation_type_id"
-            WHERE ue."user_id" = ?;
+            WHERE ue."user_id" = ?
+            ORDER BY "user_event_id";
             """;
     private static final String USER_FEEDS_INSERT_QUERY = """
             INSERT INTO "user_events" ("timestamp", "user_id", "entity_id", "event_type_id", "operation_type_id")

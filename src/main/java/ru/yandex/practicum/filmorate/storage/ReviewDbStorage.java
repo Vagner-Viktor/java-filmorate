@@ -148,6 +148,11 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public void updateReview(Review review) {
+        update(REQUEST_UPDATE_REVIEW,
+                review.getContent(),
+                review.getIsPositive(),
+                review.getReviewId());
+        review = findOne(REQUEST_GET_REVIEW, review.getReviewId()).orElse(null);
         userFeedStorage.create(UserFeed.builder()
                 .eventId(null)
                 .userId(review.getUserId())
@@ -156,10 +161,6 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                 .eventType(EventType.REVIEW.name())
                 .operation(OperationType.UPDATE.name())
                 .build());
-        update(REQUEST_UPDATE_REVIEW,
-                review.getContent(),
-                review.getIsPositive(),
-                review.getReviewId());
     }
 
     @Override
@@ -196,24 +197,8 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
         Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(0);
         if (state == 0) {
             insert(REQUEST_SET_LIKE, userId, reviewId);
-            userFeedStorage.create(UserFeed.builder()
-                    .eventId(null)
-                    .userId(userId)
-                    .entityId(reviewId)
-                    .timestamp(Instant.now())
-                    .eventType(EventType.LIKE.name())
-                    .operation(OperationType.ADD.name())
-                    .build());
         } else if (state == -1) {
             update(REQUEST_UPDATE_TO_LIKE, userId, reviewId);
-            userFeedStorage.create(UserFeed.builder()
-                    .eventId(null)
-                    .userId(userId)
-                    .entityId(reviewId)
-                    .timestamp(Instant.now())
-                    .eventType(EventType.LIKE.name())
-                    .operation(OperationType.UPDATE.name())
-                    .build());
         }
     }
 
@@ -225,40 +210,16 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
         } else if (state == 1) {
             update(REQUEST_UPDATE_TO_DISLIKE, userId, reviewId);
         }
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(userId)
-                .entityId(reviewId)
-                .timestamp(Instant.now())
-                .eventType(EventType.REVIEW.name())
-                .operation(OperationType.UPDATE.name())
-                .build());
     }
 
     @Override
     public void removeLike(Long reviewId, Long userId) {
         update(REQUEST_REMOVE_LIKE, userId, reviewId);
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(userId)
-                .entityId(reviewId)
-                .timestamp(Instant.now())
-                .eventType(EventType.REVIEW.name())
-                .operation(OperationType.REMOVE.name())
-                .build());
     }
 
     @Override
     public void removeDislike(Long reviewId, Long userId) {
         update(REQUEST_REMOVE_DISLIKE, userId, reviewId);
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(userId)
-                .entityId(reviewId)
-                .timestamp(Instant.now())
-                .eventType(EventType.REVIEW.name())
-                .operation(OperationType.REMOVE.name())
-                .build());
     }
 
     @Override
