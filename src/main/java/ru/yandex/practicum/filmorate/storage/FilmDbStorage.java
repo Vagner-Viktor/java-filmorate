@@ -246,26 +246,26 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             ORDER BY count DESC;
             """;
     private static final String GET_FILMS_RECOMMENDATIONS = """
-           SELECT
-                        f."film_id" AS "film_id",
-                        f."name" AS "name",
-                        f."description" AS "description",
-                        f."release_date" AS "release_date",
-                        f."duration" AS "duration",
-                        r."mpa_id" AS "mpa_id",
-                        r."mpa" AS "mpa"
-            FROM "films" f
-            LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
-            LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
-            LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
-            LEFT JOIN "likes" l ON f."film_id" = l."film_id"
-            WHERE l."user_id" IN
-            (SELECT "user_id" FROM "likes" WHERE NOT "user_id" = ? AND "film_id" IN
-            (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
-            GROUP BY "user_id" order by COUNT("film_id") desc LIMIT 1)
-            AND NOT l."film_id"  IN (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
-            LIMIT 1;
-           """;
+            SELECT
+                         f."film_id" AS "film_id",
+                         f."name" AS "name",
+                         f."description" AS "description",
+                         f."release_date" AS "release_date",
+                         f."duration" AS "duration",
+                         r."mpa_id" AS "mpa_id",
+                         r."mpa" AS "mpa"
+             FROM "films" f
+             LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
+             LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
+             LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
+             LEFT JOIN "likes" l ON f."film_id" = l."film_id"
+             WHERE l."user_id" IN
+             (SELECT "user_id" FROM "likes" WHERE NOT "user_id" = ? AND "film_id" IN
+             (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
+             GROUP BY "user_id" order by COUNT("film_id") desc LIMIT 1)
+             AND NOT l."film_id"  IN (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
+             LIMIT 1;
+            """;
 
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, UserFeedStorage userFeedStorage, FilmDirectorStorage filmDirectorStorage, DirectorDbStorage directorDbStorage) {
         super(jdbc, mapper);
@@ -476,9 +476,9 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         }
         //только count
         if (films == null) {
-        films = findMany(
-                FILMS_GET_POPULAR_QUERY,
-                count);
+            films = findMany(
+                    FILMS_GET_POPULAR_QUERY,
+                    count);
         }
         setFilmsGenres(films);
         setFilmsLikes(films);
@@ -512,7 +512,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public Collection<Film> getRecommendedFilmsForUser(Long id) {
-        Collection<Film> films = findMany(GET_FILMS_RECOMMENDATIONS,id,id,id);
+        Collection<Film> films = findMany(GET_FILMS_RECOMMENDATIONS, id, id, id);
         setFilmsGenres(films);
         setFilmsLikes(films);
         setFilmsDirectors(films);
