@@ -66,13 +66,13 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                 r."user_id" AS user_id,
                 r."content" AS content,
                 r."is_positive" AS is_positive,
-                SUM(u."weigh") AS useful
+                COALESCE(SUM(u."weigh"), 0) AS useful
             FROM "reviews" AS r
             LEFT JOIN "usability_reviews" AS ur ON r."review_id" = ur."review_id"
             LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
             WHERE r."film_id" = ?
             GROUP BY r."review_id"
-            ORDER BY r."review_id"
+            ORDER BY useful DESC, r."review_id"
             LIMIT ?;
             """;
 
