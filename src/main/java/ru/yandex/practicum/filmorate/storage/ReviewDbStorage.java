@@ -35,7 +35,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     private static final String REQUEST_UPDATE_REVIEW = """
             UPDATE "reviews"
-            SET "film_id" = ?, "user_id" = ?, "content" = ?, "is_positive" = ?
+            SET "content" = ?, "is_positive" = ?
             WHERE "review_id" = ?;
             """;
 
@@ -66,13 +66,13 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                 r."user_id" AS user_id,
                 r."content" AS content,
                 r."is_positive" AS is_positive,
-                SUM(u."weigh") AS useful
+                COALESCE(SUM(u."weigh"), 0) AS useful
             FROM "reviews" AS r
             LEFT JOIN "usability_reviews" AS ur ON r."review_id" = ur."review_id"
             LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
             WHERE r."film_id" = ?
             GROUP BY r."review_id"
-            ORDER BY r."review_id"
+            ORDER BY useful DESC, r."review_id"
             LIMIT ?;
             """;
 
@@ -87,13 +87,13 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                     ROW_NUMBER() OVER (PARTITION BY "film_id" ORDER BY "review_id") AS rn
                 FROM "reviews"
             )
-            SELECT rr.*, SUM(u."weigh") AS useful
+            SELECT rr.*, COALESCE(SUM(u."weigh"), 0) AS useful
             FROM RankedReviews AS rr
             LEFT JOIN "usability_reviews" AS ur ON rr.review_id = ur."review_id"
             LEFT JOIN "usabilitys" AS u ON ur."usability_id" = u."usability_id"
             WHERE rn <= ? -- типо LIMIT
             GROUP BY rr.review_id
-            ORDER BY rr.film_id, rn;
+            ORDER BY useful DESC, rr.film_id, rn;
             """;
 
     private static final String REQUEST_SET_LIKE = """
@@ -157,8 +157,6 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                 .operation(OperationType.UPDATE.name())
                 .build());
         update(REQUEST_UPDATE_REVIEW,
-                review.getFilmId(),
-                review.getUserId(),
                 review.getContent(),
                 review.getIsPositive(),
                 review.getReviewId());
@@ -195,26 +193,33 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public void setLike(Long reviewId, Long userId) {
-        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(null);
-        if (state == null || state == 0) {
+        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(0);
+        if (state == 0) {
             insert(REQUEST_SET_LIKE, userId, reviewId);
+            userFeedStorage.create(UserFeed.builder()
+                    .eventId(null)
+                    .userId(userId)
+                    .entityId(reviewId)
+                    .timestamp(Instant.now())
+                    .eventType(EventType.LIKE.name())
+                    .operation(OperationType.ADD.name())
+                    .build());
         } else if (state == -1) {
             update(REQUEST_UPDATE_TO_LIKE, userId, reviewId);
+            userFeedStorage.create(UserFeed.builder()
+                    .eventId(null)
+                    .userId(userId)
+                    .entityId(reviewId)
+                    .timestamp(Instant.now())
+                    .eventType(EventType.LIKE.name())
+                    .operation(OperationType.UPDATE.name())
+                    .build());
         }
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(userId)
-                .entityId(reviewId)
-                .timestamp(Instant.now())
-                .eventType(EventType.LIKE.name())
-                .operation(OperationType.ADD.name())
-                .build());
     }
 
     @Override
     public void setDislike(Long reviewId, Long userId) {
-        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(null);
-        if (state == null) throw new RuntimeException("Review state is null.");
+        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(0);
         if (state == 0) {
             insert(REQUEST_SET_DISLIKE, userId, reviewId);
         } else if (state == 1) {

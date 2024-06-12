@@ -30,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @ContextConfiguration(classes = {FilmDbStorage.class,
         GenreDbStorage.class,
+        DirectorDbStorage.class,
         UserDbStorage.class,
         MpaDbStorage.class,
         FilmLikeDbStorage.class,

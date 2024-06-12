@@ -140,4 +140,4 @@ ALTER TABLE "user_events" ADD FOREIGN KEY ("operation_type_id") REFERENCES "oper
 
 ALTER TABLE "films_director" ADD FOREIGN KEY ("film_id") REFERENCES "films" ("film_id") ON DELETE CASCADE;
 
-ALTER TABLE "films_director" ADD FOREIGN KEY ("director_id") REFERENCES "directors" ("director_id");
+ALTER TABLE "films_director" ADD FOREIGN KEY ("director_id") REFERENCES "directors" ("director_id") ON DELETE CASCADE;

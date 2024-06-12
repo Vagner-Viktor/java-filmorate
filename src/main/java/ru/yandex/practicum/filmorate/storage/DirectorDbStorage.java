@@ -95,6 +95,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
         }
     }
 
+    @Override
     public boolean checkDirectorExists(long id) {
         return findOne(
                 DIRECTOR_FIND_BY_ID_QUERY,

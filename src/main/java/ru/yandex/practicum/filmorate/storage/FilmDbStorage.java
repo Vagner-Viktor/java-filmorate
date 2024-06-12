@@ -10,9 +10,11 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.*;
 
+import java.sql.Date;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
@@ -27,6 +29,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private final FilmGenreStorage filmGenreStorage;
     private final UserFeedStorage userFeedStorage;
     private final FilmDirectorStorage filmDirectorStorage;
+    private final DirectorDbStorage directorDbStorage;
 
     private static final String FILMS_FIND_ALL_QUERY = """
             SELECT *
@@ -206,7 +209,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             WHERE LOWER(d."name") LIKE LOWER('%' || ? || '%')
                 OR LOWER(f."name") LIKE LOWER('%' || ? || '%')
             GROUP BY f."name", f."film_id"
-            ORDER BY "film_id";
+            ORDER BY "film_id" DESC;
             """;
     private static final String FILMS_DELETE = """
             DELETE FROM "films"
@@ -233,17 +236,38 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-            COUNT(l."film_id") AS count
+                COUNT(l."film_id") AS count
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
             LEFT JOIN "films_director" AS fd ON f."film_id" = fd."film_id"
             WHERE fd."director_id" = ?
-            GROUP BY l."film_id"
+            GROUP BY f."film_id"
             ORDER BY count DESC;
             """;
+    private static final String GET_FILMS_RECOMMENDATIONS = """
+           SELECT
+                        f."film_id" AS "film_id",
+                        f."name" AS "name",
+                        f."description" AS "description",
+                        f."release_date" AS "release_date",
+                        f."duration" AS "duration",
+                        r."mpa_id" AS "mpa_id",
+                        r."mpa" AS "mpa"
+            FROM "films" f
+            LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
+            LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
+            LEFT JOIN "likes" l ON f."film_id" = l."film_id"
+            WHERE l."user_id" IN
+            (SELECT "user_id" FROM "likes" WHERE NOT "user_id" = ? AND "film_id" IN
+            (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
+            GROUP BY "user_id" order by COUNT("film_id") desc LIMIT 1)
+            AND NOT l."film_id"  IN (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
+            LIMIT 1;
+           """;
 
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, UserFeedStorage userFeedStorage, FilmDirectorStorage filmDirectorStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, UserFeedStorage userFeedStorage, FilmDirectorStorage filmDirectorStorage, DirectorDbStorage directorDbStorage) {
         super(jdbc, mapper);
         this.userStorage = userStorage;
         this.genreStorage = genreStorage;
@@ -252,6 +276,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         this.filmGenreStorage = filmGenreStorage;
         this.userFeedStorage = userFeedStorage;
         this.filmDirectorStorage = filmDirectorStorage;
+        this.directorDbStorage = directorDbStorage;
     }
 
     @Override
@@ -284,12 +309,15 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 FILMS_INSERT_QUERY,
                 film.getName(),
                 film.getDescription(),
-                java.sql.Date.valueOf(film.getReleaseDate()),
+                Date.valueOf(film.getReleaseDate()),
                 film.getDuration(),
                 film.getMpa().getId()
         );
         film.setId(id);
-        film.setGenres(film.getGenres().stream().distinct().collect(Collectors.toList()));
+        film.setGenres(film.getGenres().stream()
+                .distinct()
+                .sorted(Comparator.comparingInt(Genre::getId))
+                .collect(Collectors.toList()));
         for (Genre genre : film.getGenres()) {
             insert(
                     FILMS_INSERT_FILMS_GENRE_QUERY,
@@ -320,7 +348,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     FILMS_UPDATE_QUERY,
                     film.getName(),
                     film.getDescription(),
-                    java.sql.Date.valueOf(film.getReleaseDate()),
+                    Date.valueOf(film.getReleaseDate()),
                     film.getDuration(),
                     film.getMpa().getId(),
                     film.getId()
@@ -329,7 +357,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     FILMS_DELETE_FILMS_GENRE_QUERY,
                     film.getId()
             );
-            film.setGenres(film.getGenres().stream().distinct().collect(Collectors.toList()));
+            film.setGenres(film.getGenres().stream()
+                    .distinct()
+                    .sorted(Comparator.comparingInt(Genre::getId))
+                    .collect(Collectors.toList()));
             for (Genre genre : film.getGenres()) {
                 insert(
                         FILMS_INSERT_FILMS_GENRE_QUERY,
@@ -423,32 +454,42 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     public Collection<Film> getPopular(Long count, Long genreId, int year) {
         if (count <= 0) throw new ValidationException("Параметр count должен быть больше 0");
         log.info("Получение списка {} популярных фильмов", count);
+        Collection<Film> films = null;
+
         //если ищем по count и year
         if (genreId == 0L && year >= 1) {
-            return findMany(
+            films = findMany(
                     FILMS_GET_POPULAR_QUERY_WITH_YEAR,
                     year, count);
         }
         //если ищем по count и genre
         if (genreId >= 1L && year == 0) {
-            return findMany(
+            films = findMany(
                     FILMS_GET_POPULAR_QUERY_WITH_GENRE,
                     genreId, count);
         }
         //если ищем по count, genre и year
         if (genreId >= 1L && year >= 1) {
-            return findMany(
+            films = findMany(
                     FILMS_GET_POPULAR_QUERY_WITH_YEAR_AND_GENRE,
                     year, genreId, count);
         }
         //только count
-        return findMany(
+        if (films == null) {
+        films = findMany(
                 FILMS_GET_POPULAR_QUERY,
                 count);
+        }
+        setFilmsGenres(films);
+        setFilmsLikes(films);
+        setFilmsDirectors(films);
+        return films;
     }
 
     @Override
     public Collection<Film> getFilmsByDirector(Long id, String sortBy) { // получаем sorted film list по likes или date
+        if (!directorDbStorage.checkDirectorExists(id))
+            throw new NotFoundException("Режисер с id = " + id + " не найден");
         log.info("Получение списка фильмов режиссера {} ", id);
 
         String sqlQuery = "";
@@ -466,6 +507,15 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         setFilmsLikes(films);
         setFilmsDirectors(films);
 
+        return films;
+    }
+
+    @Override
+    public Collection<Film> getRecommendedFilmsForUser(Long id) {
+        Collection<Film> films = findMany(GET_FILMS_RECOMMENDATIONS,id,id,id);
+        setFilmsGenres(films);
+        setFilmsLikes(films);
+        setFilmsDirectors(films);
         return films;
     }
 
@@ -496,7 +546,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 })
                 .collect(Collectors.joining(", "));
         Collection<FilmGenre> filmGenres = filmGenreStorage.findGenresOfFilms(filmsId);
-        System.out.println(filmGenres);
         for (Film film : films) {
             film.setGenres(filmGenres.stream()
                     .filter(filmGenre -> film.getId() == filmGenre.getFilmId())

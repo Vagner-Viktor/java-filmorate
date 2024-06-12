@@ -20,7 +20,8 @@ public class FilmDirectorDBStorage extends BaseDbStorage<FilmDirector> implement
                 d."name"
             FROM "films_director" AS fd
             JOIN "directors" AS d ON fd."director_id" = d."director_id"
-            WHERE "film_id" IN (%s);
+            WHERE "film_id" IN (%s)
+            ORDER BY fd."film_id";
             """;
 
     public FilmDirectorDBStorage(JdbcTemplate jdbc, RowMapper<FilmDirector> mapper) {
