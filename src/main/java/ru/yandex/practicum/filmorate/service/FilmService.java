@@ -2,10 +2,12 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.SearchType;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -14,47 +16,49 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class FilmService {
-    private final FilmStorage storage;
+
+    private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
     private static final String BY_DIRECTOR = "director";
     private static final String BY_TITLE = "title";
 
     public Collection<Film> findAll() {
-        return storage.findAll();
+        return filmStorage.findAll();
     }
 
     public Film findById(Long id) {
-        return storage.findById(id);
+        return filmStorage.findById(id);
     }
 
     public Film create(Film film) {
         validate(film);
-        return storage.create(film);
+        return filmStorage.create(film);
     }
 
     public Film update(Film newFilm) {
         validate(newFilm);
-        return storage.update(newFilm);
+        return filmStorage.update(newFilm);
     }
 
     public void delete(Long id) {
-        storage.delete(id);
+        filmStorage.delete(id);
     }
 
     public Film addLike(Long id, Long userId) {
-        return storage.addLike(id, userId);
+        return filmStorage.addLike(id, userId);
     }
 
     public Film deleteLike(Long id, Long userId) {
-        return storage.deleteLike(id, userId);
+        return filmStorage.deleteLike(id, userId);
     }
 
     public Collection<Film> getPopular(Long count, Long genreId, int year) {
-        return storage.getPopular(count, genreId, year);
+        return filmStorage.getPopular(count, genreId, year);
     }
 
     public Collection<Film> searchFilms(String query, List<String> by) {
         SearchType searchType = getSearchType(by);
-        return storage.searchFilms(query, searchType);
+        return filmStorage.searchFilms(query, searchType);
     }
 
     private SearchType getSearchType(List<String> by) {
@@ -70,11 +74,19 @@ public class FilmService {
     }
 
     public Collection<Film> getFilmsByDirector(Long id, String sortBy) {
-        return storage.getFilmsByDirector(id, sortBy);
+        return filmStorage.getFilmsByDirector(id, sortBy);
     }
 
     public Collection<Film> getRecommendedFilmsForUser(Long id) {
-        return storage.getRecommendedFilmsForUser(id);
+        return filmStorage.getRecommendedFilmsForUser(id);
+    }
+
+    public Collection<Film> getCommonFilms(Long userId, Long friendId) {
+        if (!userStorage.checkUserExists(userId))
+            throw new NotFoundException(String.format("Пользователь с id = %s не существует.", userId));
+        if (!userStorage.checkUserExists(userId))
+            throw new NotFoundException(String.format("Пользователь с id = %s не существует.", friendId));
+        return filmStorage.getCommonFilms(userId, friendId);
     }
 
     private void validate(Film film) {
