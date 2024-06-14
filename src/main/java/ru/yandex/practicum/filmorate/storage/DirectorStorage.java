@@ -15,5 +15,5 @@ public interface DirectorStorage {
 
     Long deleteDirector(Long id);
 
-    boolean isDirectorExists(long id);
+    boolean isDirectorExists(Long id);
 }

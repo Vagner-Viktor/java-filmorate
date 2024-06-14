@@ -16,7 +16,6 @@ import ru.yandex.practicum.filmorate.model.SearchType;
 import java.sql.Date;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -274,7 +273,9 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     @Override
     public Film findById(Long id) {
         log.info("Получение фильма с id = {}", id);
-        return findOne(FILMS_FIND_BY_ID_QUERY, id).orElseThrow(() -> new NotFoundException("Фильм с id = " + id + " не найден!"));
+        return findOne(
+                FILMS_FIND_BY_ID_QUERY,
+                id).orElseThrow(() -> new NotFoundException("Фильм с id = " + id + " не найден!"));
     }
 
     @Override
@@ -291,7 +292,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         film.setGenres(film.getGenres().stream()
                 .distinct()
                 .sorted(Comparator.comparingInt(Genre::getId))
-                .collect(Collectors.toList()));
+                .toList());
         for (Genre genre : film.getGenres()) {
             insert(
                     FILMS_INSERT_FILMS_GENRE_QUERY,
@@ -333,7 +334,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             film.setGenres(film.getGenres().stream()
                     .distinct()
                     .sorted(Comparator.comparingInt(Genre::getId))
-                    .collect(Collectors.toList()));
+                    .toList());
             for (Genre genre : film.getGenres()) {
                 insert(
                         FILMS_INSERT_FILMS_GENRE_QUERY,

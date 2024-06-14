@@ -155,7 +155,7 @@ public class FilmService {
         if (film.getReleaseDate().isBefore(LocalDate.of(1895, 1, 28))) {
             throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года!");
         }
-        genreStorage.isGenresExists(film.getGenres());
+        genreStorage.checkGenresExists(film.getGenres());
         film.setGenres(new HashSet<>(film.getGenres()));
         if (!mpaStorage.isMpaExists(film.getMpa().getId())) {
             throw new ValidationException("Рейтинг MPA с id = " + film.getMpa().getId() + " не найден!");

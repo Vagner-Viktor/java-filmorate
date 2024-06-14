@@ -53,7 +53,6 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
             throw new NotFoundException("Id режисера должен быть указан");
         }
         log.info("Получение режиссера по id = {}", id);
-
         return findOne(DIRECTOR_FIND_BY_ID_QUERY, id)
                 .orElseThrow(() -> new NotFoundException("Режиссер с id = " + id + " не найден!"));
     }
@@ -62,9 +61,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
     public Director addDirector(Director director) {
         Long id = insertGetKey(DIRECTORS_ADD_LIKE_QUERY, director.getName());
         director.setId(id);
-
         log.info("Режиссер {} добавлен в список с id = {}", director.getName(), director.getId());
-
         return director;
     }
 
@@ -73,10 +70,8 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
         if (director.getId() == null) {
             throw new NotFoundException("Id режисера должен быть указан");
         }
-
         if (isDirectorExists(director.getId())) {
             update(DIRECTORS_UPDATE_LIKE_QUERY, director.getName(), director.getId());
-
             log.info("Режиссер с id = {} обновлен", director.getId());
             return director;
         } else {
@@ -96,7 +91,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
     }
 
     @Override
-    public boolean isDirectorExists(long id) {
+    public boolean isDirectorExists(Long id) {
         return findOne(
                 DIRECTOR_FIND_BY_ID_QUERY,
                 id).isPresent();
