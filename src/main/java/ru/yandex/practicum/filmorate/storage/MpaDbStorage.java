@@ -43,7 +43,7 @@ public class MpaDbStorage extends BaseDbStorage<Mpa> implements MpaStorage {
         ).orElseThrow(() -> new NotFoundException("Рейтинг MPA с id = " + id + " не найден!"));
     }
 
-    public boolean checkMpaExists(int id) {
+    public boolean isMpaExists(int id) {
         return findOne(
                 MPA_FIND_BY_ID_QUERY,
                 id).isPresent();

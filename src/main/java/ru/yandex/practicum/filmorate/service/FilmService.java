@@ -64,7 +64,7 @@ public class FilmService {
     }
 
     public Film addLike(Long id, Long userId) {
-        if (!userStorage.checkUserExists(userId))
+        if (!userStorage.isUserExists(userId))
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         userFeedStorage.create(UserFeed.builder()
                 .eventId(null)
@@ -78,7 +78,7 @@ public class FilmService {
     }
 
     public Film deleteLike(Long id, Long userId) {
-        if (!userStorage.checkUserExists(userId))
+        if (!userStorage.isUserExists(userId))
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         userFeedStorage.create(UserFeed.builder()
                 .eventId(null)
@@ -121,7 +121,7 @@ public class FilmService {
     }
 
     public Collection<Film> getFilmsByDirector(Long id, String sortBy) {
-        if (!directorDbStorage.checkDirectorExists(id))
+        if (!directorDbStorage.isDirectorExists(id))
             throw new NotFoundException("Режисер с id = " + id + " не найден");
         log.info("Получение списка фильмов режиссера {} ", id);
         Collection<Film> films = filmStorage.getFilmsByDirector(id, sortBy);
@@ -140,9 +140,9 @@ public class FilmService {
     }
 
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {
-        if (!userStorage.checkUserExists(userId))
+        if (!userStorage.isUserExists(userId))
             throw new NotFoundException(String.format("Пользователь с id = %s не существует.", userId));
-        if (!userStorage.checkUserExists(userId))
+        if (!userStorage.isUserExists(userId))
             throw new NotFoundException(String.format("Пользователь с id = %s не существует.", friendId));
         Collection<Film> films = filmStorage.getCommonFilms(userId, friendId);
         setFilmsGenres(films);
@@ -155,9 +155,9 @@ public class FilmService {
         if (film.getReleaseDate().isBefore(LocalDate.of(1895, 1, 28))) {
             throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года!");
         }
-        genreStorage.checkGenresExists(film.getGenres());
+        genreStorage.isGenresExists(film.getGenres());
         film.setGenres(new HashSet<>(film.getGenres()));
-        if (!mpaStorage.checkMpaExists(film.getMpa().getId())) {
+        if (!mpaStorage.isMpaExists(film.getMpa().getId())) {
             throw new ValidationException("Рейтинг MPA с id = " + film.getMpa().getId() + " не найден!");
         }
         return true;

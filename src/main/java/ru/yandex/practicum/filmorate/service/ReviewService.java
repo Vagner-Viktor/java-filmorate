@@ -28,9 +28,9 @@ public class ReviewService {
     private static final String NOT_FOUND_FILM_MESSAGE = "Фильм с таким id не существует.";
 
     public Review createReview(Review review) {
-        if (!userStorage.checkUserExists(review.getUserId()))
+        if (!userStorage.isUserExists(review.getUserId()))
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
-        if (!filmStorage.checkFilmExists(review.getFilmId()))
+        if (!filmStorage.isFilmExists(review.getFilmId()))
             throw new NotFoundException(NOT_FOUND_FILM_MESSAGE);
         long id = reviewStorage.createReview(review);
         review.setReviewId(id);
@@ -46,11 +46,11 @@ public class ReviewService {
     }
 
     public Review updateReview(Review review) {
-        if (!reviewStorage.checkReviewExists(review.getReviewId()))
+        if (!reviewStorage.isReviewExists(review.getReviewId()))
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
-        if (!userStorage.checkUserExists(review.getUserId()))
+        if (!userStorage.isUserExists(review.getUserId()))
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
-        if (!filmStorage.checkFilmExists(review.getFilmId()))
+        if (!filmStorage.isFilmExists(review.getFilmId()))
             throw new NotFoundException(NOT_FOUND_FILM_MESSAGE);
         reviewStorage.updateReview(review);
         review = getReview(review.getReviewId());
@@ -66,7 +66,7 @@ public class ReviewService {
     }
 
     public boolean deleteReview(Long reviewId) {
-        if (!reviewStorage.checkReviewExists(reviewId))
+        if (!reviewStorage.isReviewExists(reviewId))
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         Review review = getReview(reviewId);
         userFeedStorage.create(UserFeed.builder()
@@ -81,7 +81,7 @@ public class ReviewService {
     }
 
     public Review getReview(Long reviewId) {
-        if (!reviewStorage.checkReviewExists(reviewId))
+        if (!reviewStorage.isReviewExists(reviewId))
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
         return reviewStorage.getReview(reviewId).orElse(null);
     }
@@ -89,7 +89,7 @@ public class ReviewService {
     public List<Review> getReviews(Long filmId, Integer count) {
         if (count == null || count <= 0) count = 10;
         if (filmId != null) {
-            if (!filmStorage.checkFilmExists(filmId))
+            if (!filmStorage.isFilmExists(filmId))
                 throw new NotFoundException(NOT_FOUND_FILM_MESSAGE);
             return reviewStorage.getReviewsForFilm(filmId, count);
         }
@@ -97,9 +97,9 @@ public class ReviewService {
     }
 
     public Review likeReview(Long reviewId, Long userId) {
-        if (!reviewStorage.checkReviewExists(reviewId))
+        if (!reviewStorage.isReviewExists(reviewId))
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
-        if (!userStorage.checkUserExists(userId))
+        if (!userStorage.isUserExists(userId))
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
         Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(0);
         if (state == 0) {
@@ -111,9 +111,9 @@ public class ReviewService {
     }
 
     public Review dislikeReview(Long reviewId, Long userId) {
-        if (!reviewStorage.checkReviewExists(reviewId))
+        if (!reviewStorage.isReviewExists(reviewId))
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
-        if (!userStorage.checkUserExists(userId))
+        if (!userStorage.isUserExists(userId))
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
         Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(0);
         if (state == 0) {
@@ -125,18 +125,18 @@ public class ReviewService {
     }
 
     public Review deleteLike(Long reviewId, Long userId) {
-        if (!reviewStorage.checkReviewExists(reviewId))
+        if (!reviewStorage.isReviewExists(reviewId))
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
-        if (!userStorage.checkUserExists(userId))
+        if (!userStorage.isUserExists(userId))
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
         reviewStorage.removeLike(reviewId, userId);
         return getReview(reviewId);
     }
 
     public Review deleteDislike(Long reviewId, Long userId) {
-        if (!reviewStorage.checkReviewExists(reviewId))
+        if (!reviewStorage.isReviewExists(reviewId))
             throw new NotFoundException(NOT_FOUND_REVIEW_MESSAGE);
-        if (!userStorage.checkUserExists(userId))
+        if (!userStorage.isUserExists(userId))
             throw new NotFoundException(NOT_FOUND_USER_MESSAGE);
         reviewStorage.removeDislike(reviewId, userId);
         return getReview(reviewId);

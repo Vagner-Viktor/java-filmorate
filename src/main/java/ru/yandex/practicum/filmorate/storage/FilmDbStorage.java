@@ -327,7 +327,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         if (film.getId() == null) {
             throw new ConditionsNotMetException("Id фильма должен быть указан");
         }
-        if (checkFilmExists(film.getId())) {
+        if (isFilmExists(film.getId())) {
             update(
                     FILMS_UPDATE_QUERY,
                     film.getName(),
@@ -372,7 +372,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     // удаление фильма по id, модифицировал связи в schema, при удалении фильма удаляются зависимые записи по id
     @Override
     public void delete(Long id) {
-        if (!checkFilmExists(id))
+        if (!isFilmExists(id))
             throw new NotFoundException("Фильм с id = " + id + " не найден");
         delete(FILMS_DELETE, id);
         log.info("Фильм с id = {} удален", id);
@@ -380,7 +380,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public Film addLike(Long id, Long userId) {
-        if (!checkFilmExists(id))
+        if (!isFilmExists(id))
             throw new NotFoundException("Фильм с id = " + id + " не найден");
         Film film = findOne(
                 FILMS_FIND_BY_ID_QUERY,
@@ -398,7 +398,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     @Override
     public Film deleteLike(Long id, Long userId) {
-        if (!checkFilmExists(id))
+        if (!isFilmExists(id))
             throw new NotFoundException("Фильм с id = " + id + " не найден");
         Film film = findOne(
                 FILMS_FIND_BY_ID_QUERY,
@@ -471,7 +471,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public boolean checkFilmExists(Long id) {
+    public boolean isFilmExists(Long id) {
         return findOne(
                 FILMS_FIND_BY_ID_QUERY,
                 id).isPresent();

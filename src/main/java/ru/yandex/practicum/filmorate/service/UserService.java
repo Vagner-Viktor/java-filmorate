@@ -43,9 +43,9 @@ public class UserService {
     }
 
     public User addToFriends(Long id, Long friendId) {
-        if (!userStorage.checkUserExists(id))
+        if (!userStorage.isUserExists(id))
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
-        if (!userStorage.checkUserExists(friendId))
+        if (!userStorage.isUserExists(friendId))
             throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
         if (Objects.equals(id, friendId))
             throw new ValidationException("Нельзя добавить самого себя в друзья (id = " + id + ")");
@@ -61,9 +61,9 @@ public class UserService {
     }
 
     public User deleteFromFriends(Long id, Long friendId) {
-        if (!userStorage.checkUserExists(id))
+        if (!userStorage.isUserExists(id))
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
-        if (!userStorage.checkUserExists(friendId))
+        if (!userStorage.isUserExists(friendId))
             throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
         userFeedStorage.create(UserFeed.builder()
                 .eventId(null)
@@ -85,7 +85,7 @@ public class UserService {
     }
 
     public Collection<UserFeed> findUserFeeds(Long id) {
-        if (!userStorage.checkUserExists(id))
+        if (!userStorage.isUserExists(id))
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
         return userFeedStorage.findUserFeeds(id);
     }

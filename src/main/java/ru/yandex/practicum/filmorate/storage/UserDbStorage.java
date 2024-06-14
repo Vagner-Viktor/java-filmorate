@@ -130,7 +130,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         if (user.getId() == null) {
             throw new NotFoundException("Id пользователя должен быть указан");
         }
-        if (checkUserExists(user.getId())) {
+        if (isUserExists(user.getId())) {
             validate(user);
             update(
                     USERS_UPDATE_QUERY,
@@ -149,7 +149,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     // удаление юзера по id, модифицировал связи в schema,  при удалении юзераа удаляются зависимые записи по id
     @Override
     public void delete(Long id) {
-        if (!checkUserExists(id))
+        if (!isUserExists(id))
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
         delete(USERS_DELETE, id);
         log.info("Пользователь с id = {} удален", id);
@@ -185,7 +185,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public Collection<User> findAllFriends(Long id) {
-        if (!checkUserExists(id))
+        if (!isUserExists(id))
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
         log.info("Поиск друзей пользователя с id = {}", id);
         return findMany(
@@ -196,9 +196,9 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public Collection<User> findCommonFriends(Long id, Long otherId) {
-        if (!checkUserExists(id))
+        if (!isUserExists(id))
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
-        if (!checkUserExists(otherId))
+        if (!isUserExists(otherId))
             throw new NotFoundException("Пользователь с id = " + otherId + " не найден");
         log.info("Поиск общих друзей пользователя с id = {} и пользователя с id = {}", id, otherId);
         return findMany(
@@ -211,14 +211,14 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     @Override
-    public boolean checkUserExists(Long id) {
+    public boolean isUserExists(Long id) {
         return findOne(
                 USERS_FIND_BY_ID_QUERY,
                 id).isPresent();
     }
 
     private void validate(User user) {
-        if (checkDuplicatedEmail(user.getEmail())) {
+        if (isDuplicatedEmail(user.getEmail())) {
             throw new DuplicatedDataException("Этот e-mail уже используется");
         }
         if (user.getLogin().contains(" ")) {
@@ -227,7 +227,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         if (user.getName() == null || user.getName().isBlank()) user.setName(user.getLogin());
     }
 
-    private boolean checkDuplicatedEmail(String email) {
+    private boolean isDuplicatedEmail(String email) {
         return findOne(
                 USERS_FIND_BY_EMAIL_QUERY,
                 email).isPresent();

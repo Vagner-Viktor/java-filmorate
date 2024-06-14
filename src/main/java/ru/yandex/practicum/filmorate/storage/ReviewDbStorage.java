@@ -187,7 +187,7 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
     }
 
     @Override
-    public boolean checkReviewExists(Long id) {
+    public boolean isReviewExists(Long id) {
         return getReview(id).isPresent();
     }
 

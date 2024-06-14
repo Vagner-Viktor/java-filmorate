@@ -20,7 +20,7 @@ public interface FilmStorage {
 
     Film deleteLike(Long id, Long userId);
 
-    boolean checkFilmExists(Long id);
+    boolean isFilmExists(Long id);
 
     Collection<Film> searchFilms(String query, SearchType searchType);
 
