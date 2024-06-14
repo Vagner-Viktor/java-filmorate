@@ -69,13 +69,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
-            LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
-            LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
             GROUP BY "film_id"
             ORDER BY count DESC
             LIMIT ?;
             """;
-    private static final String FILMS_GET_POPULAR_QUERY_WITH_GENRE = """
+    private static final String FILMS_GET_POPULAR_QUERY_BY_GENRE = """
             SELECT
                 f."film_id" AS "film_id",
                 f."name" AS "name",
@@ -84,18 +82,16 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-                COUNT(l."film_id") AS count
+                COUNT(f."film_id") AS count
             FROM "films" AS f
-            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
             LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
-            LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
             WHERE fg."genre_id" = ?
             GROUP BY "film_id"
             ORDER BY count DESC
             LIMIT ?;
             """;
-    private static final String FILMS_GET_POPULAR_QUERY_WITH_YEAR = """
+    private static final String FILMS_GET_POPULAR_QUERY_BY_YEAR = """
             SELECT
                 f."film_id" AS "film_id",
                 f."name" AS "name",
@@ -104,18 +100,15 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-                COUNT(l."film_id") AS count
+                COUNT(f."film_id") AS count
             FROM "films" AS f
-            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
-            LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
-            LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
             WHERE EXTRACT(YEAR FROM f."release_date") = ?
             GROUP BY "film_id"
             ORDER BY count DESC
             LIMIT ?;
             """;
-    private static final String FILMS_GET_POPULAR_QUERY_WITH_YEAR_AND_GENRE = """
+    private static final String FILMS_GET_POPULAR_QUERY_BY_YEAR_AND_GENRE = """
             SELECT
                 f."film_id" AS "film_id",
                 f."name" AS "name",
@@ -124,12 +117,10 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-                COUNT(l."film_id") AS count
+                COUNT(f."film_id") AS count
             FROM "films" AS f
-            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
             LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
-            LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
             WHERE EXTRACT(YEAR FROM f."release_date") = ? AND fg."genre_id" = ?
             GROUP BY "film_id"
             ORDER BY count DESC
@@ -248,8 +239,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                          r."mpa" AS "mpa"
              FROM "films" f
              LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
-             LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
-             LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
              LEFT JOIN "likes" l ON f."film_id" = l."film_id"
              WHERE l."user_id" IN
              (SELECT "user_id" FROM "likes" WHERE NOT "user_id" = ? AND "film_id" IN
@@ -423,19 +412,19 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         //если ищем по count и year
         if (genreId == 0L && year >= 1) {
             films = findMany(
-                    FILMS_GET_POPULAR_QUERY_WITH_YEAR,
+                    FILMS_GET_POPULAR_QUERY_BY_YEAR,
                     year, count);
         }
         //если ищем по count и genre
         if (genreId >= 1L && year == 0) {
             films = findMany(
-                    FILMS_GET_POPULAR_QUERY_WITH_GENRE,
+                    FILMS_GET_POPULAR_QUERY_BY_GENRE,
                     genreId, count);
         }
         //если ищем по count, genre и year
         if (genreId >= 1L && year >= 1) {
             films = findMany(
-                    FILMS_GET_POPULAR_QUERY_WITH_YEAR_AND_GENRE,
+                    FILMS_GET_POPULAR_QUERY_BY_YEAR_AND_GENRE,
                     year, genreId, count);
         }
         //только count
