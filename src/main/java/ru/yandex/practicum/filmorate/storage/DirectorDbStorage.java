@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 
 import java.util.Collection;
@@ -68,7 +69,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
     @Override
     public Director updateDirector(Director director) {
         if (director.getId() == null) {
-            throw new NotFoundException("Id режисера должен быть указан");
+            throw new ValidationException("Id режисера должен быть указан");
         }
         if (isDirectorExists(director.getId())) {
             update(DIRECTORS_UPDATE_LIKE_QUERY, director.getName(), director.getId());
