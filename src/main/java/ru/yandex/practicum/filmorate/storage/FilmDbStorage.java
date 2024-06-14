@@ -8,29 +8,20 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.SearchType;
 
 import java.sql.Date;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @Primary
 public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
-    private final UserStorage userStorage;
-    private final GenreStorage genreStorage;
-    private final MpaStorage mpaStorage;
-    private final FilmLikeStorage filmLikeStorage;
-    private final FilmGenreStorage filmGenreStorage;
-    private final UserFeedStorage userFeedStorage;
-    private final FilmDirectorStorage filmDirectorStorage;
-    private final DirectorDbStorage directorDbStorage;
 
     private static final String FILMS_FIND_ALL_QUERY = """
             SELECT *
@@ -86,63 +77,63 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             """;
     private static final String FILMS_GET_POPULAR_QUERY_WITH_GENRE = """
             SELECT
-                        f."film_id" AS "film_id",
-                        f."name" AS "name",
-                        f."description" AS "description",
-                        f."release_date" AS "release_date",
-                        f."duration" AS "duration",
-                        r."mpa_id" AS "mpa_id",
-                        r."mpa" AS "mpa",
-                        COUNT(l."film_id") AS count
-                    FROM "films" AS f
-                    LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
-                    LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
-                    LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
-                    LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
-                    WHERE fg."genre_id" = ?
-                    GROUP BY "film_id"
-                    ORDER BY count DESC
-                    LIMIT ?;
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+                COUNT(l."film_id") AS count
+            FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+            LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
+            LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
+            WHERE fg."genre_id" = ?
+            GROUP BY "film_id"
+            ORDER BY count DESC
+            LIMIT ?;
             """;
     private static final String FILMS_GET_POPULAR_QUERY_WITH_YEAR = """
             SELECT
-                        f."film_id" AS "film_id",
-                        f."name" AS "name",
-                        f."description" AS "description",
-                        f."release_date" AS "release_date",
-                        f."duration" AS "duration",
-                        r."mpa_id" AS "mpa_id",
-                        r."mpa" AS "mpa",
-                        COUNT(l."film_id") AS count
-                    FROM "films" AS f
-                    LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
-                    LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
-                    LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
-                    LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
-                    WHERE EXTRACT(YEAR FROM f."release_date") = ?
-                    GROUP BY "film_id"
-                    ORDER BY count DESC
-                    LIMIT ?;
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+                COUNT(l."film_id") AS count
+            FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+            LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
+            LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
+            WHERE EXTRACT(YEAR FROM f."release_date") = ?
+            GROUP BY "film_id"
+            ORDER BY count DESC
+            LIMIT ?;
             """;
     private static final String FILMS_GET_POPULAR_QUERY_WITH_YEAR_AND_GENRE = """
             SELECT
-                        f."film_id" AS "film_id",
-                        f."name" AS "name",
-                        f."description" AS "description",
-                        f."release_date" AS "release_date",
-                        f."duration" AS "duration",
-                        r."mpa_id" AS "mpa_id",
-                        r."mpa" AS "mpa",
-                        COUNT(l."film_id") AS count
-                    FROM "films" AS f
-                    LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
-                    LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
-                    LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
-                    LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
-                    WHERE EXTRACT(YEAR FROM f."release_date") = ? AND fg."genre_id" = ?
-                    GROUP BY "film_id"
-                    ORDER BY count DESC
-                    LIMIT ?;
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+                COUNT(l."film_id") AS count
+            FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
+            LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
+            LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
+            LEFT JOIN "genres" AS g ON g."genre_id" = fg."genre_id"
+            WHERE EXTRACT(YEAR FROM f."release_date") = ? AND fg."genre_id" = ?
+            GROUP BY "film_id"
+            ORDER BY count DESC
+            LIMIT ?;
             """;
     private static final String FILMS_DELETE_FILMS_GENRE_QUERY = """
             DELETE FROM "films_genre"
@@ -281,44 +272,24 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             ORDER BY "film_id"
             """;
 
-    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper, UserStorage userStorage, GenreStorage genreStorage, MpaStorage mpaStorage, FilmLikeStorage likeStorage, FilmGenreStorage filmGenreStorage, UserFeedStorage userFeedStorage, FilmDirectorStorage filmDirectorStorage, DirectorDbStorage directorDbStorage) {
+    public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
-        this.userStorage = userStorage;
-        this.genreStorage = genreStorage;
-        this.mpaStorage = mpaStorage;
-        this.filmLikeStorage = likeStorage;
-        this.filmGenreStorage = filmGenreStorage;
-        this.userFeedStorage = userFeedStorage;
-        this.filmDirectorStorage = filmDirectorStorage;
-        this.directorDbStorage = directorDbStorage;
     }
 
     @Override
     public Collection<Film> findAll() {
         log.info("Получение списка фильмов");
-        Collection<Film> films = findMany(FILMS_FIND_ALL_QUERY);
-        setFilmsGenres(films);
-        setFilmsLikes(films);
-        setFilmsDirectors(films);
-        return films;
+        return findMany(FILMS_FIND_ALL_QUERY);
     }
 
     @Override
     public Film findById(Long id) {
         log.info("Получение фильма с id = {}", id);
-        Collection<Film> films = findMany(FILMS_FIND_BY_ID_QUERY, id);
-        if (films.isEmpty()) {
-            throw new NotFoundException("Фильм с id = " + id + " не найден!");
-        }
-        setFilmsGenres(films);
-        setFilmsLikes(films);
-        setFilmsDirectors(films);
-        return films.iterator().next();
+        return findOne(FILMS_FIND_BY_ID_QUERY, id).orElseThrow(() -> new NotFoundException("Фильм с id = " + id + " не найден!"));
     }
 
     @Override
     public Film create(Film film) {
-        validate(film);
         long id = insertGetKey(
                 FILMS_INSERT_QUERY,
                 film.getName(),
@@ -357,7 +328,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             throw new ConditionsNotMetException("Id фильма должен быть указан");
         }
         if (checkFilmExists(film.getId())) {
-            validate(film);
             update(
                     FILMS_UPDATE_QUERY,
                     film.getName(),
@@ -412,8 +382,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     public Film addLike(Long id, Long userId) {
         if (!checkFilmExists(id))
             throw new NotFoundException("Фильм с id = " + id + " не найден");
-        if (!userStorage.checkUserExists(userId))
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         Film film = findOne(
                 FILMS_FIND_BY_ID_QUERY,
                 id
@@ -424,14 +392,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 userId
         );
         film.addLike(userId);
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(userId)
-                .entityId(id)
-                .timestamp(Instant.now())
-                .eventType(EventType.LIKE.name())
-                .operation(OperationType.ADD.name())
-                .build());
         log.info("Пользователь с id = {} поставил лайк фильму id = {}", userId, id);
         return film;
     }
@@ -440,8 +400,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     public Film deleteLike(Long id, Long userId) {
         if (!checkFilmExists(id))
             throw new NotFoundException("Фильм с id = " + id + " не найден");
-        if (!userStorage.checkUserExists(userId))
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         Film film = findOne(
                 FILMS_FIND_BY_ID_QUERY,
                 id
@@ -452,14 +410,6 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 userId
         );
         film.deleteLike(userId);
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(userId)
-                .entityId(id)
-                .timestamp(Instant.now())
-                .eventType(EventType.LIKE.name())
-                .operation(OperationType.REMOVE.name())
-                .build());
         log.info("Пользователь с id = {} удалил лайк фильму id = {}", userId, id);
         return film;
     }
@@ -494,50 +444,30 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                     FILMS_GET_POPULAR_QUERY,
                     count);
         }
-        setFilmsGenres(films);
-        setFilmsLikes(films);
-        setFilmsDirectors(films);
         return films;
     }
 
     @Override
     public Collection<Film> getFilmsByDirector(Long id, String sortBy) { // получаем sorted film list по likes или date
-        if (!directorDbStorage.checkDirectorExists(id))
-            throw new NotFoundException("Режисер с id = " + id + " не найден");
-        log.info("Получение списка фильмов режиссера {} ", id);
-
-        String sqlQuery = "";
-
         switch (sortBy) {
-            case "year" -> sqlQuery = GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_DATE;
-            case "likes" -> sqlQuery = GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_LIKES;
+            case "year" -> {
+                return findMany(GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_DATE, id);
+            }
+            case "likes" -> {
+                return findMany(GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_LIKES, id);
+            }
             default -> throw new NotFoundException("Данный вид сортировки " + sortBy + " не найден");
         }
-
-        Collection<Film> films = findMany(
-                sqlQuery, id);
-
-        setFilmsGenres(films);
-        setFilmsLikes(films);
-        setFilmsDirectors(films);
-
-        return films;
     }
 
     @Override
     public Collection<Film> getRecommendedFilmsForUser(Long id) {
-        Collection<Film> films = findMany(GET_FILMS_RECOMMENDATIONS, id, id, id);
-        setFilmsGenres(films);
-        setFilmsLikes(films);
-        setFilmsDirectors(films);
-        return films;
+        return findMany(GET_FILMS_RECOMMENDATIONS, id, id, id);
     }
 
     @Override
     public Collection<Film> getCommonFilms(Long userId, Long friendId) {
-        List<Film> films = findMany(GET_COMMON_FILMS, userId, friendId);
-        setFilmsGenres(films);
-        return films;
+        return findMany(GET_COMMON_FILMS, userId, friendId);
     }
 
     @Override
@@ -549,77 +479,16 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
 
     public Collection<Film> searchFilms(String query, SearchType searchType) {
         log.info("Получение фильмов по значению = {}", query);
-        Collection<Film> films = switch (searchType) {
-            case TITLE_AND_DIRECTOR -> findMany(FILMS_SEARCH_BY_TITLE_AND_DIRECTOR, query, query);
-            case DIRECTOR -> findMany(FILMS_SEARCH_BY_DIRECTOR, query);
-            default -> findMany(FILMS_SEARCH_BY_TITLE, query);
-        };
-        setFilmsGenres(films);
-        setFilmsLikes(films);
-        setFilmsDirectors(films);
-        return films;
-    }
-
-    private void setFilmsGenres(Collection<Film> films) {
-        String filmsId = films.stream()
-                .map(film -> {
-                    return film.getId().toString();
-                })
-                .collect(Collectors.joining(", "));
-        Collection<FilmGenre> filmGenres = filmGenreStorage.findGenresOfFilms(filmsId);
-        for (Film film : films) {
-            film.setGenres(filmGenres.stream()
-                    .filter(filmGenre -> film.getId() == filmGenre.getFilmId())
-                    .map(filmGenre -> new Genre(
-                            filmGenre.getGenreId(),
-                            filmGenre.getGenre())
-                    )
-                    .collect(Collectors.toList()));
+        switch (searchType) {
+            case TITLE_AND_DIRECTOR -> {
+                return findMany(FILMS_SEARCH_BY_TITLE_AND_DIRECTOR, query, query);
+            }
+            case DIRECTOR -> {
+                return findMany(FILMS_SEARCH_BY_DIRECTOR, query);
+            }
+            default -> {
+                return findMany(FILMS_SEARCH_BY_TITLE, query);
+            }
         }
-    }
-
-    private void setFilmsLikes(Collection<Film> films) {
-        String filmsId = films.stream()
-                .map(film -> {
-                    return film.getId().toString();
-                })
-                .collect(Collectors.joining(", "));
-        Collection<FilmLike> filmLikes = filmLikeStorage.findLikesOfFilms(filmsId);
-        for (Film film : films) {
-            film.setLikes(filmLikes.stream()
-                    .filter(filmLike -> film.getId() == filmLike.getFilmId())
-                    .map(filmLike -> filmLike.getUserId())
-                    .collect(Collectors.toList()));
-        }
-    }
-
-    private void setFilmsDirectors(Collection<Film> films) {
-        String filmsId = films.stream()
-                .map(film -> {
-                    return film.getId().toString();
-                })
-                .collect(Collectors.joining(", "));
-        Collection<FilmDirector> filmDirectors = filmDirectorStorage.findDirectorsOfFilms(filmsId);
-        for (Film film : films) {
-            film.setDirectors(filmDirectors.stream()
-                    .filter(filmDirector -> film.getId() == filmDirector.getFilmId())
-                    .map(filmDirector -> new Director(
-                            filmDirector.getDirectorId(),
-                            filmDirector.getName())
-                    )
-                    .collect(Collectors.toList()));
-        }
-    }
-
-    private boolean validate(Film film) {
-        if (film.getReleaseDate().isBefore(LocalDate.of(1895, 1, 28))) {
-            throw new ValidationException("Дата релиза не может быть раньше 28 декабря 1895 года!");
-        }
-        genreStorage.checkGenresExists(film.getGenres());
-        film.setGenres(new HashSet<>(film.getGenres()));
-        if (!mpaStorage.checkMpaExists(film.getMpa().getId())) {
-            throw new ValidationException("Рейтинг MPA с id = " + film.getMpa().getId() + " не найден!");
-        }
-        return true;
     }
 }
