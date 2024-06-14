@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.DuplicatedDataException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.*;
+import ru.yandex.practicum.filmorate.model.Friend;
+import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
@@ -18,7 +18,6 @@ import java.util.List;
 @Component
 @Primary
 public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
-    private final UserFeedStorage userFeedStorage;
     private static final int USERS_FRIENDSHIP_STATUS_CONFIRMED = 1;
     private static final int USERS_FRIENDSHIP_STATUS_UNCONFIRMED = 2;
     private static final String USERS_FIND_ALL_QUERY = """
@@ -88,9 +87,8 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
             WHERE "user_id" = ?;
             """;
 
-    public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper, UserFeedStorage userFeedStorage) {
+    public UserDbStorage(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
-        this.userFeedStorage = userFeedStorage;
     }
 
     @Override
@@ -132,7 +130,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         if (user.getId() == null) {
             throw new NotFoundException("Id пользователя должен быть указан");
         }
-        if (checkUserExists(user.getId())) {
+        if (isUserExists(user.getId())) {
             validate(user);
             update(
                     USERS_UPDATE_QUERY,
@@ -151,7 +149,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     // удаление юзера по id, модифицировал связи в schema,  при удалении юзераа удаляются зависимые записи по id
     @Override
     public void delete(Long id) {
-        if (!checkUserExists(id))
+        if (!isUserExists(id))
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
         delete(USERS_DELETE, id);
         log.info("Пользователь с id = {} удален", id);
@@ -159,12 +157,6 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public User addToFriends(Long id, Long friendId) {
-        if (!checkUserExists(id))
-            throw new NotFoundException("Пользователь с id = " + id + " не найден");
-        if (!checkUserExists(friendId))
-            throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
-        if (id == friendId)
-            throw new ValidationException("Нельзя добавить самого себя в друзья (id = " + id + ")");
         User user = findOne(
                 USERS_FIND_BY_ID_QUERY,
                 id
@@ -176,44 +168,24 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
                 USERS_FRIENDSHIP_STATUS_UNCONFIRMED
         );
         user.addFriend(new Friend(friendId, USERS_FRIENDSHIP_STATUS_UNCONFIRMED));
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(id)
-                .entityId(friendId)
-                .timestamp(Instant.now())
-                .eventType(EventType.FRIEND.name())
-                .operation(OperationType.ADD.name())
-                .build());
         log.info("Пользователь с id = {} и пользователь с id = {} теперь друзья", friendId, id);
         return user;
     }
 
     @Override
     public User deleteFromFriends(Long id, Long friendId) {
-        if (!checkUserExists(id))
-            throw new NotFoundException("Пользователь с id = " + id + " не найден");
-        if (!checkUserExists(friendId))
-            throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
         delete(
                 USERS_DELETE_FROM_FRIENDS_QUERY,
                 id,
                 friendId
         );
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(id)
-                .entityId(friendId)
-                .timestamp(Instant.now())
-                .eventType(EventType.FRIEND.name())
-                .operation(OperationType.REMOVE.name())
-                .build());
         log.info("Пользователь с id = {} и пользователь с id = {} больше не друзья", friendId, id);
         return null;
     }
 
     @Override
     public Collection<User> findAllFriends(Long id) {
-        if (!checkUserExists(id))
+        if (!isUserExists(id))
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
         log.info("Поиск друзей пользователя с id = {}", id);
         return findMany(
@@ -224,9 +196,9 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
 
     @Override
     public Collection<User> findCommonFriends(Long id, Long otherId) {
-        if (!checkUserExists(id))
+        if (!isUserExists(id))
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
-        if (!checkUserExists(otherId))
+        if (!isUserExists(otherId))
             throw new NotFoundException("Пользователь с id = " + otherId + " не найден");
         log.info("Поиск общих друзей пользователя с id = {} и пользователя с id = {}", id, otherId);
         return findMany(
@@ -239,21 +211,14 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
     }
 
     @Override
-    public boolean checkUserExists(Long id) {
+    public boolean isUserExists(Long id) {
         return findOne(
                 USERS_FIND_BY_ID_QUERY,
                 id).isPresent();
     }
 
-    @Override
-    public Collection<UserFeed> findUserFeeds(Long id) {
-        if (!checkUserExists(id))
-            throw new NotFoundException("Пользователь с id = " + id + " не найден");
-        return userFeedStorage.findUserFeeds(id);
-    }
-
     private void validate(User user) {
-        if (checkDuplicatedEmail(user.getEmail())) {
+        if (isDuplicatedEmail(user.getEmail())) {
             throw new DuplicatedDataException("Этот e-mail уже используется");
         }
         if (user.getLogin().contains(" ")) {
@@ -262,7 +227,7 @@ public class UserDbStorage extends BaseDbStorage<User> implements UserStorage {
         if (user.getName() == null || user.getName().isBlank()) user.setName(user.getLogin());
     }
 
-    private boolean checkDuplicatedEmail(String email) {
+    private boolean isDuplicatedEmail(String email) {
         return findOne(
                 USERS_FIND_BY_EMAIL_QUERY,
                 email).isPresent();

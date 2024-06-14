@@ -21,11 +21,15 @@ public interface ReviewStorage {
 
     void setLike(Long reviewId, Long userId);
 
-    void setDislike(Long reviewId, Long userId);
+    void updateLike(Long reviewId, Long userId);
 
     void removeLike(Long reviewId, Long userId);
 
+    void setDislike(Long reviewId, Long userId);
+
+    void updateDislike(Long reviewId, Long userId);
+
     void removeDislike(Long reviewId, Long userId);
 
-    boolean checkReviewExists(Long id);
+    boolean isReviewExists(Long id);
 }

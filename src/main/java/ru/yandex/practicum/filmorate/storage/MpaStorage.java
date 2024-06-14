@@ -9,5 +9,5 @@ public interface MpaStorage {
 
     Mpa findById(int id);
 
-    boolean checkMpaExists(int id);
+    boolean isMpaExists(int id);
 }

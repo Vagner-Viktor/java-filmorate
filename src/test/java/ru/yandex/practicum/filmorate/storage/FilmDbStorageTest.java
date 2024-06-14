@@ -18,6 +18,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -42,11 +43,13 @@ import static org.junit.jupiter.api.Assertions.*;
         UserFeedDBStorage.class,
         ReviewDbStorage.class,
         UsabilityStateDbStorage.class,
-        DirectorDbStorage.class})
+        DirectorDbStorage.class,
+        FilmService.class})
 @ComponentScan(basePackages = {"ru.yandex.practicum.filmorate.storage.mapper"})
 class FilmDbStorageTest {
     private final FilmDbStorage filmDbStorage;
     private final UserDbStorage userDbStorage;
+    private final FilmService filmService;
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @AllArgsConstructor
@@ -227,15 +230,15 @@ class FilmDbStorageTest {
         if (film.getReleaseDate().isBefore(LocalDate.of(1895, 1, 28))) {
             Exception exception = assertThrows(
                     ValidationException.class,
-                    () -> filmDbStorage.create(film)
+                    () -> filmService.create(film)
             );
             assertEquals(
                     "Дата релиза не может быть раньше 28 декабря 1895 года!",
                     exception.getMessage()
             );
         } else {
-            filmDbStorage.create(film);
-            Collection<Film> responseEntity = filmDbStorage.findAll();
+            filmService.create(film);
+            Collection<Film> responseEntity = filmService.findAll();
             assertNotNull(responseEntity);
             assertEquals(1, responseEntity.size());
             assertNotNull(responseEntity.iterator().next().getId());
@@ -268,14 +271,14 @@ class FilmDbStorageTest {
     @Test
     void addLike() {
         Film film = getTestFilm(1);
-        Long filmId = filmDbStorage.create(film).getId();
+        Long filmId = filmService.create(film).getId();
 
         User user = getTestUser(1);
         Long user1Id = userDbStorage.create(user).getId();
 
-        filmDbStorage.addLike(filmId, user1Id);
+        filmService.addLike(filmId, user1Id);
 
-        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.findAll());
+        ArrayList<Film> responseEntity = new ArrayList<>(filmService.findAll());
         assertNotNull(responseEntity);
         assertEquals(1, responseEntity.size());
         assertEquals(1, responseEntity.get(0).getLikesCount());

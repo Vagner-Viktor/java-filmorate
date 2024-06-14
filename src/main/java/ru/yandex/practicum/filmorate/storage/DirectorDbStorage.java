@@ -6,6 +6,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 
 import java.util.Collection;
@@ -53,7 +54,6 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
             throw new NotFoundException("Id режисера должен быть указан");
         }
         log.info("Получение режиссера по id = {}", id);
-
         return findOne(DIRECTOR_FIND_BY_ID_QUERY, id)
                 .orElseThrow(() -> new NotFoundException("Режиссер с id = " + id + " не найден!"));
     }
@@ -62,21 +62,17 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
     public Director addDirector(Director director) {
         Long id = insertGetKey(DIRECTORS_ADD_LIKE_QUERY, director.getName());
         director.setId(id);
-
         log.info("Режиссер {} добавлен в список с id = {}", director.getName(), director.getId());
-
         return director;
     }
 
     @Override
     public Director updateDirector(Director director) {
         if (director.getId() == null) {
-            throw new NotFoundException("Id режисера должен быть указан");
+            throw new ValidationException("Id режисера должен быть указан");
         }
-
-        if (checkDirectorExists(director.getId())) {
+        if (isDirectorExists(director.getId())) {
             update(DIRECTORS_UPDATE_LIKE_QUERY, director.getName(), director.getId());
-
             log.info("Режиссер с id = {} обновлен", director.getId());
             return director;
         } else {
@@ -86,7 +82,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
 
     @Override
     public Long deleteDirector(Long id) {
-        if (checkDirectorExists(id)) {
+        if (isDirectorExists(id)) {
             delete(DIRECTORS_DELETE_QUERY, id);
             log.info("Режиссер с id = {} удален", id);
             return id;
@@ -96,7 +92,7 @@ public class DirectorDbStorage extends BaseDbStorage<Director> implements Direct
     }
 
     @Override
-    public boolean checkDirectorExists(long id) {
+    public boolean isDirectorExists(Long id) {
         return findOne(
                 DIRECTOR_FIND_BY_ID_QUERY,
                 id).isPresent();
