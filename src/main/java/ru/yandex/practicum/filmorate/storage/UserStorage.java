@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.model.UserFeed;
 
 import java.util.Collection;
 
@@ -25,6 +24,4 @@ public interface UserStorage {
     Collection<User> findCommonFriends(Long id, Long otherId);
 
     boolean checkUserExists(Long id);
-
-    Collection<UserFeed> findUserFeeds(Long id);
 }

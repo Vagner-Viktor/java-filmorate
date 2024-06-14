@@ -5,12 +5,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.model.EventType;
-import ru.yandex.practicum.filmorate.model.OperationType;
 import ru.yandex.practicum.filmorate.model.Review;
-import ru.yandex.practicum.filmorate.model.UserFeed;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,13 +15,8 @@ import java.util.Optional;
 @Primary
 public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStorage {
 
-    private final UsabilityStateStorage usabilityStateStorage;
-    private final UserFeedStorage userFeedStorage;
-
-    public ReviewDbStorage(JdbcTemplate jdbc, RowMapper<Review> mapper, UsabilityStateStorage usabilityStateStorage, UserFeedStorage userFeedStorage) {
+    public ReviewDbStorage(JdbcTemplate jdbc, RowMapper<Review> mapper) {
         super(jdbc, mapper);
-        this.usabilityStateStorage = usabilityStateStorage;
-        this.userFeedStorage = userFeedStorage;
     }
 
     private static final String REQUEST_ADD_REVIEW = """
@@ -130,20 +121,11 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public long createReview(Review review) {
-        long id = insertGetKey(REQUEST_ADD_REVIEW,
+        return insertGetKey(REQUEST_ADD_REVIEW,
                 review.getFilmId(),
                 review.getUserId(),
                 review.getContent(),
                 review.getIsPositive());
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(review.getUserId())
-                .entityId(id)
-                .timestamp(Instant.now())
-                .eventType(EventType.REVIEW.name())
-                .operation(OperationType.ADD.name())
-                .build());
-        return id;
     }
 
     @Override
@@ -152,28 +134,10 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
                 review.getContent(),
                 review.getIsPositive(),
                 review.getReviewId());
-        review = findOne(REQUEST_GET_REVIEW, review.getReviewId()).orElse(null);
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(review.getUserId())
-                .entityId(review.getReviewId())
-                .timestamp(Instant.now())
-                .eventType(EventType.REVIEW.name())
-                .operation(OperationType.UPDATE.name())
-                .build());
     }
 
     @Override
     public boolean deleteReview(Long id) {
-        Review review = findOne(REQUEST_GET_REVIEW, id).orElse(null);
-        userFeedStorage.create(UserFeed.builder()
-                .eventId(null)
-                .userId(review.getUserId())
-                .entityId(review.getReviewId())
-                .timestamp(Instant.now())
-                .eventType(EventType.REVIEW.name())
-                .operation(OperationType.REMOVE.name())
-                .build());
         return delete(REQUEST_DELETE_REVIEW, id);
     }
 
@@ -194,22 +158,22 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
 
     @Override
     public void setLike(Long reviewId, Long userId) {
-        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(0);
-        if (state == 0) {
-            insert(REQUEST_SET_LIKE, userId, reviewId);
-        } else if (state == -1) {
-            update(REQUEST_UPDATE_TO_LIKE, userId, reviewId);
-        }
+        insert(REQUEST_SET_LIKE, userId, reviewId);
+    }
+
+    @Override
+    public void updateLike(Long reviewId, Long userId) {
+        update(REQUEST_UPDATE_TO_LIKE, userId, reviewId);
     }
 
     @Override
     public void setDislike(Long reviewId, Long userId) {
-        Integer state = usabilityStateStorage.getCurrentState(reviewId, userId).orElse(0);
-        if (state == 0) {
-            insert(REQUEST_SET_DISLIKE, userId, reviewId);
-        } else if (state == 1) {
-            update(REQUEST_UPDATE_TO_DISLIKE, userId, reviewId);
-        }
+        insert(REQUEST_SET_DISLIKE, userId, reviewId);
+    }
+
+    @Override
+    public void updateDislike(Long reviewId, Long userId) {
+        update(REQUEST_UPDATE_TO_DISLIKE, userId, reviewId);
     }
 
     @Override
@@ -226,6 +190,5 @@ public class ReviewDbStorage extends BaseDbStorage<Review> implements ReviewStor
     public boolean checkReviewExists(Long id) {
         return getReview(id).isPresent();
     }
-
 
 }
