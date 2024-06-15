@@ -30,11 +30,17 @@ import static org.junit.jupiter.api.Assertions.*;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @ContextConfiguration(classes = {FilmDbStorage.class,
         GenreDbStorage.class,
+        DirectorDbStorage.class,
         UserDbStorage.class,
         MpaDbStorage.class,
         FilmLikeDbStorage.class,
         FriendDbStorage.class,
-        FilmGenreDBStorage.class})
+        FilmGenreDBStorage.class,
+        FilmDirectorDBStorage.class,
+        UserFeedDBStorage.class,
+        ReviewDbStorage.class,
+        UsabilityStateDbStorage.class,
+        DirectorDbStorage.class})
 @ComponentScan(basePackages = {"ru.yandex.practicum.filmorate.storage.mapper"})
 class UserDbStorageTest {
     private final UserDbStorage userDbStorage;

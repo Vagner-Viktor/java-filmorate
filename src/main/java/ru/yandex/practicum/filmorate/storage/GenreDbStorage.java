@@ -44,15 +44,16 @@ public class GenreDbStorage extends BaseDbStorage<Genre> implements GenreStorage
         ).orElseThrow(() -> new NotFoundException("Жанр с id = " + id + " не найден!"));
     }
 
-    public boolean checkGenresExists(Collection<Genre> genres) {
+    @Override
+    public void checkGenresExists(Collection<Genre> genres) {
         for (Genre genre : genres) {
-            if (!checkGenreExists(genre.getId()))
+            if (!isGenreExists(genre.getId()))
                 throw new ValidationException("Жанр с id = " + genre.getId() + " не найден!");
         }
-        return true;
     }
 
-    public boolean checkGenreExists(int id) {
+    @Override
+    public boolean isGenreExists(int id) {
         return findOne(
                 GENRES_FIND_BY_ID_QUERY,
                 id).isPresent();

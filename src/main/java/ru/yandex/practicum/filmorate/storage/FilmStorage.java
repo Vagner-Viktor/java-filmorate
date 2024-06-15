@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.storage;
 
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.SearchType;
 
 import java.util.Collection;
 
@@ -13,9 +14,21 @@ public interface FilmStorage {
 
     Film update(Film newFilm);
 
+    void delete(Long id);
+
     Film addLike(Long id, Long userId);
 
     Film deleteLike(Long id, Long userId);
 
-    Collection<Film> getPopular(Long count);
+    boolean isFilmExists(Long id);
+
+    Collection<Film> searchFilms(String query, SearchType searchType);
+
+    Collection<Film> getPopular(Long count, Long genreId, int year);
+
+    Collection<Film> getFilmsByDirector(Long id, String sortBy);
+
+    Collection<Film> getRecommendedFilmsForUser(Long id);
+
+    Collection<Film> getCommonFilms(Long userId, Long friendId);
 }

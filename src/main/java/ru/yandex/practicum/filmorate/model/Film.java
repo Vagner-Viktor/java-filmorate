@@ -21,9 +21,8 @@ import java.util.HashSet;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Film {
-    private Long id;
     private static final int DESCRIPTION_MAX_SIZE = 200;
-
+    private Long id;
     @NotBlank
     private String name;
 
@@ -45,6 +44,9 @@ public class Film {
 
     @Builder.Default
     private Collection<Genre> genres = new HashSet<>();
+
+    @Builder.Default
+    private Collection<Director> directors = new HashSet<>();
 
     @JsonProperty("duration")
     @Positive

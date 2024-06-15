@@ -7,9 +7,13 @@ import java.util.Collection;
 public interface UserStorage {
     Collection<User> findAll();
 
+    User findById(Long id);
+
     User create(User user);
 
     User update(User newUser);
+
+    void delete(Long id);
 
     User addToFriends(Long id, Long friendId);
 
@@ -19,5 +23,5 @@ public interface UserStorage {
 
     Collection<User> findCommonFriends(Long id, Long otherId);
 
-    boolean checkUserExists(Long id);
+    boolean isUserExists(Long id);
 }

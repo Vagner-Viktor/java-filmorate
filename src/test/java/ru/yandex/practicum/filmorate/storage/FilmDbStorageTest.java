@@ -18,6 +18,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -32,15 +33,23 @@ import static org.junit.jupiter.api.Assertions.*;
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @ContextConfiguration(classes = {FilmDbStorage.class,
         GenreDbStorage.class,
+        DirectorDbStorage.class,
         UserDbStorage.class,
         MpaDbStorage.class,
         FilmLikeDbStorage.class,
         FriendDbStorage.class,
-        FilmGenreDBStorage.class})
+        FilmGenreDBStorage.class,
+        FilmDirectorDBStorage.class,
+        UserFeedDBStorage.class,
+        ReviewDbStorage.class,
+        UsabilityStateDbStorage.class,
+        DirectorDbStorage.class,
+        FilmService.class})
 @ComponentScan(basePackages = {"ru.yandex.practicum.filmorate.storage.mapper"})
 class FilmDbStorageTest {
     private final FilmDbStorage filmDbStorage;
     private final UserDbStorage userDbStorage;
+    private final FilmService filmService;
     private final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @AllArgsConstructor
@@ -221,15 +230,15 @@ class FilmDbStorageTest {
         if (film.getReleaseDate().isBefore(LocalDate.of(1895, 1, 28))) {
             Exception exception = assertThrows(
                     ValidationException.class,
-                    () -> filmDbStorage.create(film)
+                    () -> filmService.create(film)
             );
             assertEquals(
                     "Дата релиза не может быть раньше 28 декабря 1895 года!",
                     exception.getMessage()
             );
         } else {
-            filmDbStorage.create(film);
-            Collection<Film> responseEntity = filmDbStorage.findAll();
+            filmService.create(film);
+            Collection<Film> responseEntity = filmService.findAll();
             assertNotNull(responseEntity);
             assertEquals(1, responseEntity.size());
             assertNotNull(responseEntity.iterator().next().getId());
@@ -262,14 +271,14 @@ class FilmDbStorageTest {
     @Test
     void addLike() {
         Film film = getTestFilm(1);
-        Long filmId = filmDbStorage.create(film).getId();
+        Long filmId = filmService.create(film).getId();
 
         User user = getTestUser(1);
         Long user1Id = userDbStorage.create(user).getId();
 
-        filmDbStorage.addLike(filmId, user1Id);
+        filmService.addLike(filmId, user1Id);
 
-        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.findAll());
+        ArrayList<Film> responseEntity = new ArrayList<>(filmService.findAll());
         assertNotNull(responseEntity);
         assertEquals(1, responseEntity.size());
         assertEquals(1, responseEntity.get(0).getLikesCount());
@@ -317,7 +326,7 @@ class FilmDbStorageTest {
         filmDbStorage.addLike(film3Id, user2Id);
 
 
-        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(10L));
+        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(10L, 0L, 0));
         assertNotNull(responseEntity);
         assertEquals(3, responseEntity.size());
         assertEquals(film2Id, responseEntity.get(0).getId());
@@ -349,7 +358,7 @@ class FilmDbStorageTest {
         filmDbStorage.addLike(film3Id, user2Id);
 
 
-        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(1L));
+        ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(1L, 0L, 0));
         assertNotNull(responseEntity);
         assertEquals(1, responseEntity.size());
         assertEquals(film2Id, responseEntity.get(0).getId());

@@ -17,7 +17,8 @@ public class FilmGenreDBStorage extends BaseDbStorage<FilmGenre> implements Film
             SELECT fg."film_id", g."genre_id", g."genre"
             FROM "films_genre" AS fg
             JOIN "genres" AS g ON fg."genre_id" = g."genre_id"
-            WHERE "film_id" IN (%s);
+            WHERE "film_id" IN (%s)
+            ORDER BY fg."film_id", g."genre_id";
             """;
 
     public FilmGenreDBStorage(JdbcTemplate jdbc, RowMapper<FilmGenre> mapper) {
