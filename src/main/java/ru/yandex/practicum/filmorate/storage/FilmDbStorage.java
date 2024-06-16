@@ -8,10 +8,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.ConditionsNotMetException;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.SearchType;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.sql.Date;
 import java.util.Collection;
@@ -47,8 +44,8 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             WHERE f."film_id" = ?;
             """;
     private static final String FILMS_ADD_LIKE_QUERY = """
-            MERGE INTO "likes" ("film_id" , "user_id")
-                        VALUES (?, ?);
+            MERGE INTO "likes" ("film_id" , "user_id", "mark")
+                        VALUES (?, ?, ?);
             """;
     private static final String FILMS_DELETE_LIKE_QUERY = """
             DELETE FROM "likes"
@@ -64,12 +61,12 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-            COUNT(l."film_id") AS count
+                AVG(l."mark") AS avg
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
             GROUP BY "film_id"
-            ORDER BY count DESC
+            ORDER BY avg DESC
             LIMIT ?;
             """;
     private static final String FILMS_GET_POPULAR_QUERY_BY_GENRE = """
@@ -81,13 +78,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-                COUNT(f."film_id") AS count
+                AVG(l."mark") AS avg
             FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
             LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
             WHERE fg."genre_id" = ?
             GROUP BY "film_id"
-            ORDER BY count DESC
+            ORDER BY avg DESC
             LIMIT ?;
             """;
     private static final String FILMS_GET_POPULAR_QUERY_BY_YEAR = """
@@ -99,12 +97,13 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-                COUNT(f."film_id") AS count
+                AVG(l."mark") AS avg
             FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
             WHERE EXTRACT(YEAR FROM f."release_date") = ?
             GROUP BY "film_id"
-            ORDER BY count DESC
+            ORDER BY avg DESC
             LIMIT ?;
             """;
     private static final String FILMS_GET_POPULAR_QUERY_BY_YEAR_AND_GENRE = """
@@ -116,13 +115,14 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-                COUNT(f."film_id") AS count
+                AVG(l."mark") AS avg
             FROM "films" AS f
+            LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
             LEFT JOIN "films_genre" AS fg ON fg."film_id" = f."film_id"
             WHERE EXTRACT(YEAR FROM f."release_date") = ? AND fg."genre_id" = ?
             GROUP BY "film_id"
-            ORDER BY count DESC
+            ORDER BY avg DESC
             LIMIT ?;
             """;
     private static final String FILMS_DELETE_FILMS_GENRE_QUERY = """
@@ -142,13 +142,13 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-            COUNT(l."film_id") AS count
+                AVG(l."mark") AS avg
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
             WHERE LOWER(f."name") LIKE LOWER('%' || ? || '%')
             GROUP BY f."name", f."film_id"
-            ORDER BY "film_id";
+            ORDER BY avg DESC, "film_id";
             """;
     private static final String FILMS_SEARCH_BY_DIRECTOR = """
             SELECT
@@ -159,7 +159,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-            COUNT(l."film_id") AS count
+                AVG(l."mark") AS avg
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
@@ -167,7 +167,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             LEFT JOIN "directors" AS d ON fd."director_id" = d."director_id"
             WHERE LOWER(d."name") LIKE LOWER('%' || ? || '%')
             GROUP BY f."name", f."film_id"
-            ORDER BY "film_id";
+            ORDER BY avg DESC, "film_id";
             """;
     private static final String FILMS_DELETE_FILMS_DIRECTOR_QUERY = """
             DELETE FROM "films_director"
@@ -182,7 +182,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-            COUNT(l."film_id") AS count
+                AVG(l."mark") AS avg
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
@@ -191,7 +191,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             WHERE LOWER(d."name") LIKE LOWER('%' || ? || '%')
                 OR LOWER(f."name") LIKE LOWER('%' || ? || '%')
             GROUP BY f."name", f."film_id"
-            ORDER BY "film_id" DESC;
+            ORDER BY avg DESC, "film_id";
             """;
     private static final String FILMS_DELETE = """
             DELETE FROM "films"
@@ -212,30 +212,30 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     private static final String GET_FILMS_BY_DIRECTOR_ID_SORTED_BY_LIKES = """
             SELECT
                 f."film_id" AS "film_id",
-                f."name" AS name,
+                f."name" AS "name",
                 f."description" AS "description",
                 f."release_date" AS "release_date",
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa",
-                COUNT(l."film_id") AS count
+                AVG(l."mark") AS avg
             FROM "films" AS f
             LEFT JOIN "likes" AS l ON l."film_id" = f."film_id"
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
             LEFT JOIN "films_director" AS fd ON f."film_id" = fd."film_id"
             WHERE fd."director_id" = ?
             GROUP BY f."film_id"
-            ORDER BY count DESC;
+            ORDER BY avg DESC;
             """;
     private static final String GET_FILMS_RECOMMENDATIONS = """
             SELECT
-                         f."film_id" AS "film_id",
-                         f."name" AS "name",
-                         f."description" AS "description",
-                         f."release_date" AS "release_date",
-                         f."duration" AS "duration",
-                         r."mpa_id" AS "mpa_id",
-                         r."mpa" AS "mpa"
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa"
              FROM "films" f
              LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
              LEFT JOIN "likes" l ON f."film_id" = l."film_id"
@@ -248,16 +248,26 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
             """;
 
     private static final String GET_COMMON_FILMS = """
-            SELECT *
+            SELECT
+                f."film_id" AS "film_id",
+                f."name" AS "name",
+                f."description" AS "description",
+                f."release_date" AS "release_date",
+                f."duration" AS "duration",
+                r."mpa_id" AS "mpa_id",
+                r."mpa" AS "mpa",
+                AVG(l."mark") AS avg
             FROM "films" AS f
+            LEFT JOIN "likes" l ON f."film_id" = l."film_id"
             LEFT JOIN "mpas" AS r ON  f."mpa_id" = r."mpa_id"
-            WHERE "film_id" IN (
+            WHERE f."film_id" IN (
                 SELECT l1."film_id"
                 FROM "likes" AS l1
                 LEFT JOIN "likes" AS l2 ON l1."film_id" = l2."film_id"
                 WHERE l1."user_id" = ? AND l2."user_id" = ?
             )
-            ORDER BY "film_id"
+            GROUP BY f."film_id"
+            ORDER BY avg, f."film_id"
             """;
 
     public FilmDbStorage(JdbcTemplate jdbc, RowMapper<Film> mapper) {
@@ -369,7 +379,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public Film addLike(Long id, Long userId) {
+    public Film addLike(Long id, Long userId, Float mark) {
         if (!isFilmExists(id))
             throw new NotFoundException("Фильм с id = " + id + " не найден");
         Film film = findOne(
@@ -379,9 +389,11 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         insert(
                 FILMS_ADD_LIKE_QUERY,
                 id,
-                userId
+                userId,
+                mark
         );
-        film.addLike(userId);
+        film.addLike(new FilmLike(id, userId, mark));
+
         log.info("Пользователь с id = {} поставил лайк фильму id = {}", userId, id);
         return film;
     }
@@ -399,7 +411,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 id,
                 userId
         );
-        film.deleteLike(userId);
+        film.deleteLike(new FilmLike(id, userId, 0.0f));
         log.info("Пользователь с id = {} удалил лайк фильму id = {}", userId, id);
         return film;
     }
@@ -410,25 +422,25 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
         log.info("Получение списка {} популярных фильмов", count);
         Collection<Film> films = null;
 
-        //если ищем по count и year
+        //если ищем по avg и year
         if (genreId == 0L && year >= 1) {
             films = findMany(
                     FILMS_GET_POPULAR_QUERY_BY_YEAR,
                     year, count);
         }
-        //если ищем по count и genre
+        //если ищем по avg и genre
         if (genreId >= 1L && year == 0) {
             films = findMany(
                     FILMS_GET_POPULAR_QUERY_BY_GENRE,
                     genreId, count);
         }
-        //если ищем по count, genre и year
+        //если ищем по avg, genre и year
         if (genreId >= 1L && year >= 1) {
             films = findMany(
                     FILMS_GET_POPULAR_QUERY_BY_YEAR_AND_GENRE,
                     year, genreId, count);
         }
-        //только count
+        //только avg
         if (films == null) {
             films = findMany(
                     FILMS_GET_POPULAR_QUERY,
