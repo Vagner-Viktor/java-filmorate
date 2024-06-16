@@ -236,15 +236,28 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 f."duration" AS "duration",
                 r."mpa_id" AS "mpa_id",
                 r."mpa" AS "mpa"
-             FROM "films" f
-             LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
-             LEFT JOIN "likes" l ON f."film_id" = l."film_id"
-             WHERE l."user_id" IN
-             (SELECT "user_id" FROM "likes" WHERE NOT "user_id" = ? AND "film_id" IN
-             (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
-             GROUP BY "user_id" order by COUNT("film_id") desc LIMIT 1)
-             AND NOT l."film_id"  IN (SELECT "film_id" FROM "likes" WHERE "user_id" = ?)
-             LIMIT 1;
+            FROM "films" f
+            LEFT JOIN "mpas" AS r ON f."mpa_id" = r."mpa_id"
+            LEFT JOIN "likes" l ON f."film_id" = l."film_id"
+            WHERE l."user_id" IN (
+                SELECT "user_id"
+                FROM "likes"
+                WHERE NOT "user_id" = ? AND "film_id" IN (
+                    SELECT "film_id"
+                    FROM "likes"
+                    WHERE "user_id" = ?
+                    )
+                GROUP BY "user_id"
+                ORDER BY COUNT("film_id") DESC
+                LIMIT 1
+                ) AND NOT l."film_id" IN (
+                SELECT "film_id"
+                FROM "likes"
+                WHERE "user_id" = ?
+                )
+            GROUP BY f."film_id"
+            HAVING AVG(l."mark") >= 5
+            LIMIT 1;
             """;
 
     private static final String GET_COMMON_FILMS = """
