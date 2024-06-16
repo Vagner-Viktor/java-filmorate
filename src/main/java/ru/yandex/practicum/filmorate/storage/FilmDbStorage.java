@@ -256,7 +256,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 WHERE "user_id" = ?
                 )
             GROUP BY f."film_id"
-            HAVING AVG(l."mark") >= 5
+            HAVING AVG(l."mark") >= 6
             LIMIT 1;
             """;
 
