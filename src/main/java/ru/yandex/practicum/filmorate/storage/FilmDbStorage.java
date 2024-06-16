@@ -307,7 +307,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 FILMS_INSERT_QUERY,
                 film.getName(),
                 film.getDescription(),
-                Date.valueOf(film.getReleaseDate()),
+                film.getReleaseDate(),
                 film.getDuration(),
                 film.getMpa().getId()
         );
