@@ -184,7 +184,7 @@ class FilmDbStorageTest {
         List<ConstraintViolation<Film>> violations = new ArrayList<>(validator.validate(film));
 
         ExpectedViolation expectedViolation = new ExpectedViolation(
-                "name", "не должно быть пустым");
+                "name", "must not be blank");
         assertEquals(1, violations.size());
         assertEquals(
                 expectedViolation.propertyPath,
@@ -203,7 +203,7 @@ class FilmDbStorageTest {
         List<ConstraintViolation<Film>> violations = new ArrayList<>(validator.validate(film));
 
         ExpectedViolation expectedViolation = new ExpectedViolation(
-                "description", "размер должен находиться в диапазоне от 0 до 200");
+                "description", "size must be between 0 and 200");
         assertEquals(1, violations.size());
         assertEquals(
                 expectedViolation.propertyPath,
@@ -253,7 +253,7 @@ class FilmDbStorageTest {
         List<ConstraintViolation<Film>> violations = new ArrayList<>(validator.validate(film));
         System.out.println(violations);
         ExpectedViolation expectedViolation = new ExpectedViolation(
-                "durationTimeSeconds", "должно быть больше 0");
+                "durationTimeSeconds", "must be greater than 0");
         assertEquals(1, violations.size());
         assertEquals(
                 expectedViolation.propertyPath,
