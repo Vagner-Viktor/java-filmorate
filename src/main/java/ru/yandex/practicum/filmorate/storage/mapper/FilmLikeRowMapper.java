@@ -14,6 +14,6 @@ public class FilmLikeRowMapper implements RowMapper<FilmLike> {
         return new FilmLike(
                 rs.getLong("film_id"),
                 rs.getLong("user_id"),
-                rs.getFloat("mark"));
+                rs.getInt("mark"));
     }
 }

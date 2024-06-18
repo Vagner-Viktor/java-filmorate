@@ -61,7 +61,7 @@ public class FilmService {
         filmStorage.delete(id);
     }
 
-    public Film addLike(Long id, Long userId, Float mark) {
+    public Film addLike(Long id, Long userId, Integer mark) {
         if (!userStorage.isUserExists(userId))
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         userFeedStorage.create(UserFeed.builder()
@@ -72,8 +72,7 @@ public class FilmService {
                 .eventType(EventType.LIKE.name())
                 .operation(OperationType.ADD.name())
                 .build());
-        double scale = Math.pow(10, 1);
-        Film film = filmStorage.addLike(id, userId, (float) (Math.round(mark * scale) / scale));
+        Film film = filmStorage.addLike(id, userId, mark);
         setFilmsLikes(List.of(film));
         return film;
     }

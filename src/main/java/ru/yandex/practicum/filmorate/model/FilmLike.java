@@ -22,7 +22,7 @@ public class FilmLike {
     private Long userId;
 
     @Size(min = 0, max = 10, message = "Rating не передан или не корректный.")
-    private Float mark;
+    private Integer mark;
 
     @Override
     public boolean equals(Object o) {

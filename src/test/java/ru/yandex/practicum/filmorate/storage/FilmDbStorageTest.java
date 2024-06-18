@@ -279,7 +279,7 @@ class FilmDbStorageTest {
         assertNotNull(responseEntity);
         assertEquals(1, responseEntity.size());
         assertEquals(1, responseEntity.get(0).getLikesCount());
-        assertTrue(responseEntity.get(0).getLikes().contains(new FilmLike(filmId, user1Id, 0f)));
+        assertTrue(responseEntity.get(0).getLikes().contains(new FilmLike(filmId, user1Id, 0)));
     }
 
     @Test
@@ -315,12 +315,12 @@ class FilmDbStorageTest {
         User user3 = getTestUser(3);
         Long user3Id = userDbStorage.create(user3).getId();
 
-        filmDbStorage.addLike(film2Id, user1Id, 10f);
-        filmDbStorage.addLike(film2Id, user2Id, 7.5f);
-        filmDbStorage.addLike(film2Id, user3Id, 8.3f);
+        filmDbStorage.addLike(film2Id, user1Id, 10);
+        filmDbStorage.addLike(film2Id, user2Id, 7);
+        filmDbStorage.addLike(film2Id, user3Id, 8);
 
-        filmDbStorage.addLike(film3Id, user1Id, 6.4f);
-        filmDbStorage.addLike(film3Id, user2Id, 4.8f);
+        filmDbStorage.addLike(film3Id, user1Id, 6);
+        filmDbStorage.addLike(film3Id, user2Id, 4);
 
 
         ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(10L, 0L, 0));
@@ -347,12 +347,12 @@ class FilmDbStorageTest {
         User user3 = getTestUser(3);
         Long user3Id = userDbStorage.create(user3).getId();
 
-        filmDbStorage.addLike(film2Id, user1Id, 5.4f);
-        filmDbStorage.addLike(film2Id, user2Id, 9.8f);
-        filmDbStorage.addLike(film2Id, user3Id, 8.7f);
+        filmDbStorage.addLike(film2Id, user1Id, 5);
+        filmDbStorage.addLike(film2Id, user2Id, 10);
+        filmDbStorage.addLike(film2Id, user3Id, 8);
 
-        filmDbStorage.addLike(film3Id, user1Id, 7.6f);
-        filmDbStorage.addLike(film3Id, user2Id, 2.3f);
+        filmDbStorage.addLike(film3Id, user1Id, 8);
+        filmDbStorage.addLike(film3Id, user2Id, 2);
 
 
         ArrayList<Film> responseEntity = new ArrayList<>(filmDbStorage.getPopular(1L, 0L, 0));
@@ -361,8 +361,7 @@ class FilmDbStorageTest {
         assertEquals(film2Id, responseEntity.get(0).getId());
     }
 
-    private float getRandomMark() {
-        double scale = Math.pow(10, 1);
-        return (float) (Math.round(Math.random() * 10 * scale) / scale);
+    private int getRandomMark() {
+        return (int) (Math.round(Math.random() * 10));
     }
 }

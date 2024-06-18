@@ -52,7 +52,7 @@ create TABLE IF NOT EXISTS "mpas" (
 create TABLE IF NOT EXISTS "likes" (
   "film_id" bigint NOT NULL,
   "user_id" bigint NOT NULL,
-  "mark" REAL NOT NULL CHECK ("mark" >= 0 AND "mark" <= 10),
+  "mark" INTEGER NOT NULL CHECK ("mark" >= 0 AND "mark" <= 10),
   PRIMARY KEY ("film_id", "user_id")
 );
 

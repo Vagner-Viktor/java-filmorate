@@ -392,7 +392,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
     }
 
     @Override
-    public Film addLike(Long id, Long userId, Float mark) {
+    public Film addLike(Long id, Long userId, Integer mark) {
         if (!isFilmExists(id))
             throw new NotFoundException("Фильм с id = " + id + " не найден");
         Film film = findOne(
@@ -424,7 +424,7 @@ public class FilmDbStorage extends BaseDbStorage<Film> implements FilmStorage {
                 id,
                 userId
         );
-        film.deleteLike(new FilmLike(id, userId, 0.0f));
+        film.deleteLike(new FilmLike(id, userId, 0));
         log.info("Пользователь с id = {} удалил лайк фильму id = {}", userId, id);
         return film;
     }
