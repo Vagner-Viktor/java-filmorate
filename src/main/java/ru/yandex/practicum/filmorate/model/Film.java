@@ -37,7 +37,7 @@ public class Film {
     private Duration duration;
 
     @Builder.Default
-    private Collection<Long> likes = new HashSet<>();
+    private Collection<FilmLike> likes = new HashSet<>();
 
     @NotNull
     private Mpa mpa;
@@ -54,12 +54,12 @@ public class Film {
         return duration.getSeconds();
     }
 
-    public void addLike(Long id) {
-        likes.add(id);
+    public void addLike(FilmLike like) {
+        likes.add(like);
     }
 
-    public void deleteLike(Long id) {
-        likes.remove(id);
+    public void deleteLike(FilmLike like) {
+        likes.remove(like);
     }
 
     public int getLikesCount() {

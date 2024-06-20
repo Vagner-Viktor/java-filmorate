@@ -13,6 +13,7 @@ public class FilmLikeRowMapper implements RowMapper<FilmLike> {
     public FilmLike mapRow(ResultSet rs, int rowNum) throws SQLException {
         return new FilmLike(
                 rs.getLong("film_id"),
-                rs.getLong("user_id"));
+                rs.getLong("user_id"),
+                rs.getInt("mark"));
     }
 }

@@ -16,7 +16,8 @@ public class FilmLikeDbStorage extends BaseDbStorage<FilmLike> implements FilmLi
     private static final String LIKES_FIND_BY_FILM_ID_QUERY = """
             SELECT *
             FROM "likes"
-            WHERE "film_id" IN (%s);
+            WHERE "film_id" IN (%s)
+            ORDER BY "mark" DESC, "user_id";
             """;
 
     public FilmLikeDbStorage(JdbcTemplate jdbc, RowMapper<FilmLike> mapper) {

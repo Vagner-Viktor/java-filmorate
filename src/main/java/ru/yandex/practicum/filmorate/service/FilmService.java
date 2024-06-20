@@ -10,9 +10,7 @@ import ru.yandex.practicum.filmorate.storage.*;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -63,7 +61,7 @@ public class FilmService {
         filmStorage.delete(id);
     }
 
-    public Film addLike(Long id, Long userId) {
+    public Film addLike(Long id, Long userId, Integer mark) {
         if (!userStorage.isUserExists(userId))
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         userFeedStorage.create(UserFeed.builder()
@@ -74,7 +72,9 @@ public class FilmService {
                 .eventType(EventType.LIKE.name())
                 .operation(OperationType.ADD.name())
                 .build());
-        return filmStorage.addLike(id, userId);
+        Film film = filmStorage.addLike(id, userId, mark);
+        setFilmsLikes(List.of(film));
+        return film;
     }
 
     public Film deleteLike(Long id, Long userId) {
@@ -88,7 +88,9 @@ public class FilmService {
                 .eventType(EventType.LIKE.name())
                 .operation(OperationType.REMOVE.name())
                 .build());
-        return filmStorage.deleteLike(id, userId);
+        Film film = filmStorage.deleteLike(id, userId);
+        setFilmsLikes(List.of(film));
+        return film;
     }
 
     public Collection<Film> getPopular(Long count, Long genreId, int year) {
@@ -208,9 +210,8 @@ public class FilmService {
         Collection<FilmLike> filmLikes = filmLikeStorage.findLikesOfFilms(filmsId);
         for (Film film : films) {
             film.setLikes(filmLikes.stream()
-                    .filter(filmLike -> film.getId() == filmLike.getFilmId())
-                    .map(filmLike -> filmLike.getUserId())
-                    .collect(Collectors.toList()));
+                    .filter(filmLike -> film.getId().equals(filmLike.getFilmId()))
+                    .toList());
         }
     }
 }

@@ -11,6 +11,29 @@ A user can send a friend request to another user. Status for a “friendship” 
 * unconfirmed - when one user sent a request to add another user as a friend,
 * confirmed - when the second user agreed to be added.
 
+### add-marks refactoring
+[Postman tests](postman/add-marks/add-marks.json) 
+<br/>P.S. Not all tests pass all the checks. Watch the Response Body and check it yourself!
+
+API changes:
+
+| № | API before                      | API after                                   | Params                                                                                             |
+|---|---------------------------------|---------------------------------------------|----------------------------------------------------------------------------------------------------|
+| 1 | ```/films/{id}/like/{userId}``` | ```/films/{id}/like/{userId}?mark={mark}``` | ```id, userId``` — positive integer (User ID), <br/>```mark``` — positive fractional from 0 to 10. |
+
+The changes affected the logic of the following APIs:
+1. ```/films/popular```
+2. ```/films/search```
+3. ```/films/director/{id}```
+4. ```/films/common```
+5. ```/users/{id}/recommendations```
+
+After replacing likes with ratings, the rating system has changed. Now the rating is calculated as an arithmetic mean. A score from 1 to 5 is considered negative, a score from 6 to 10 is considered positive.
+
+Now the recommendation algorithm searches for similar ratings among other users, and recommends movies only with a positive average rating.
+
+In the answers, where sorting by the number of likes used to take place, sorting by average rating is now taking place
+
 ### Examples of SQL queries
 
 Films genre:
